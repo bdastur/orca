@@ -3,6 +3,7 @@
 
 import os
 import boto3
+import botocore
 from ConfigParser import SafeConfigParser
 
 
@@ -85,6 +86,64 @@ class AwsService(object):
             for profile in profiles:
                 self.clients[profile] = boto3.client(service)
 
+    def list_buckets(self, profile_names=None):
+        '''
+        Return all the buckets.
 
+        :type profile_names: List of Strings
+        :param profile_names: List of profiles. If Not set then get list
+            of buckets from all profiles/environments.
 
+        '''
+        bucketlist = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+
+            buckets = self.clients[profile].list_buckets()
+            for bucket in buckets['Buckets']:
+                bucket['profile_name'] = profile
+                bucketlist.append(bucket)
+
+        return bucketlist
+
+    def populate_bucket_location(self, bucketlist):
+        '''
+        Update the bucket information with bucket location.
+
+        :type bucketlist: List of bucket (list of dictionaries)
+        :param bucketlist: List of buckets
+
+        '''
+
+        for bucket in bucketlist:
+            profile = bucket['profile_name']
+            locationdata = self.clients[profile].get_bucket_location(
+                Bucket=bucket['Name'])
+            bucket['LocationConstraint'] = locationdata['LocationConstraint']
+
+    def populate_bucket_policy(self, bucketlist):
+        '''
+        Update the bucket information with bucket policy.
+
+        :type bucketlist: List of buckets (list of dictionaries)
+        : param bucketlist: List of buckets
+
+        '''
+
+        for bucket in bucketlist:
+            profile = bucket['profile_name']
+            try:
+                policydata = self.clients[profile].get_bucket_policy(
+                    Bucket=bucket['Name'])
+                bucket['Policy'] = policydata['Policy']
+            except botocore.exceptions.ClientError:
+                bucket['Policy'] = None
+
+    def create_bucket(self, bucket_name):
+        '''
+        test
+        '''
+        pass
 
