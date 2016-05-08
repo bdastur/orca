@@ -21,14 +21,26 @@ class S3CommandHandler(object):
         '''
         service_client = aws_service.AwsService('s3')
         bucketlist = service_client.list_buckets()
+
+        bucket_summary = {}
         for bucket in bucketlist:
-            print bucket
+            profile_name = bucket['profile_name']
+            if bucket_summary.get(profile_name, None) is None:
+                bucket_summary[profile_name] = {}
+                bucket_summary[profile_name]['count'] = 0
+            else:
+                bucket_summary[profile_name]['count'] += 1
+
+        print bucket_summary
+
 
 
 class OrcaCli(object):
     def __init__(self):
         self.namespace = self.__parse_arguments()
         print "Namespace: ", self.namespace
+        if self.namespace.output is None:
+            self.namespace.output = "table"
         if self.namespace.service == "s3":
             self.perform_s3_operations(self.namespace)
 
@@ -38,7 +50,9 @@ class OrcaCli(object):
         '''
         print "s3 operations"
         s3cmdhandler = S3CommandHandler()
-        s3cmdhandler.display_s3_summary()
+
+        if namespace.summary is True:
+            s3cmdhandler.display_s3_summary()
 
 
     def __parse_arguments(self):
@@ -49,6 +63,9 @@ class OrcaCli(object):
             prog="orcacli.py",
             formatter_class=argparse.RawTextHelpFormatter,
             description="Orca command line")
+
+        parser.add_argument("--output",
+                            help="Output format {json, table}")
 
         subparser = parser.add_subparsers(dest="service",
                                           help="Service type")
@@ -71,14 +88,6 @@ class OrcaCli(object):
 
 
         namespace = parser.parse_args()
-
-
-
-        #s3parser.add_argument("list-buckets",
-        #                     action="store_true",
-        #                     help="Display all buckets")
-
-        # Subparser: 'iam'
 
 
         return namespace

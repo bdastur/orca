@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+from ConfigParser import SafeConfigParser
 import boto3
 import botocore
-from ConfigParser import SafeConfigParser
 
 
 class AwsConfig(object):
@@ -84,7 +84,8 @@ class AwsService(object):
             print "Profiles: ", profiles
 
             for profile in profiles:
-                self.clients[profile] = boto3.client(service)
+                session = boto3.Session(profile_name=profile)
+                self.clients[profile] = session.client(service)
 
     def list_buckets(self, profile_names=None):
         '''
@@ -102,10 +103,24 @@ class AwsService(object):
                 continue
 
             buckets = self.clients[profile].list_buckets()
-            for bucket in buckets['Buckets']:
-                bucket['profile_name'] = profile
-                bucketlist.append(bucket)
 
+            for bucket in buckets['Buckets']:
+                bucket['profile_name'] = []
+                # Before we add the bucket to the list check if it
+                # already exist. Since bucket is a global entity it
+                # could show up in multiple profiles if there are
+                # different profiles for same account/env with different
+                # regions
+                bucket_present = False
+                for savedbucket in bucketlist:
+                    if bucket['Name'] == savedbucket['Name']:
+                        savedbucket['profile_name'].append(profile)
+                        bucket_present = True
+                        break
+                if bucket_present is False:
+                    bucket['profile_name'].append(profile)
+                    bucketlist.append(bucket)
+                #bucketlist.append(bucket)
         return bucketlist
 
     def populate_bucket_location(self, bucketlist):
