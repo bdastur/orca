@@ -133,7 +133,7 @@ class AwsService(object):
         '''
 
         for bucket in bucketlist:
-            profile = bucket['profile_name']
+            profile = bucket['profile_name'][0]
             locationdata = self.clients[profile].get_bucket_location(
                 Bucket=bucket['Name'])
             bucket['LocationConstraint'] = locationdata['LocationConstraint']
@@ -148,7 +148,7 @@ class AwsService(object):
         '''
 
         for bucket in bucketlist:
-            profile = bucket['profile_name']
+            profile = bucket['profile_name'][0]
             try:
                 policydata = self.clients[profile].get_bucket_policy(
                     Bucket=bucket['Name'])
