@@ -81,7 +81,6 @@ class AwsService(object):
         else:
             awsconfig = AwsConfig()
             profiles = awsconfig.get_profiles()
-            print "Profiles: ", profiles
 
             for profile in profiles:
                 session = boto3.Session(profile_name=profile)
@@ -174,16 +173,25 @@ class AwsService(object):
             try:
                 contents = objectdata['Contents']
             except KeyError:
-                print "Key Error, name", bucket['Name']
                 bucket['objects'] = None
+                bucket['object_count'] = 0
+                bucket['object_size'] = 0
                 continue
 
+            objcount = 0
+            objsize = 0
             for content in contents:
                 objinfo = {}
+                objcount += 1
+                objsize = objsize + content['Size']
                 objinfo['Key'] = content['Key']
                 objinfo['Size'] = content['Size']
                 objinfo['LastModified'] = content['LastModified']
                 bucket['objects'].append(objinfo)
+            bucket['object_count'] = objcount
+            bucket['object_size'] = objsize
+
+
 
     def create_bucket(self, bucket_name):
         '''
