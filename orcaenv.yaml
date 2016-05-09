@@ -1,0 +1,2 @@
+s3_bucket_naming_policy: "(\w+)-s3-<somename>-<someidentifier>-(\w+)"
+

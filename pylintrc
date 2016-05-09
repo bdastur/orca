@@ -15,7 +15,7 @@ max-module-lines=2000
 
 
 [MESSAGE CONTROL]
-disable=anomalous-backslash-in-string, superfluous-parens, too-few-public-methods,pointless-string-statement,unused-argument,missing-docstring
+disable=anomalous-backslash-in-string, superfluous-parens, too-few-public-methods,pointless-string-statement,unused-argument,missing-docstring,no-self-use
 
 
 [SIMILARITIES]
