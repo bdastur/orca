@@ -31,6 +31,18 @@ class AwsConfig(object):
         '''
         return self.cfgparser.sections()
 
+    def get_aws_access_key_id(self, profilename):
+        '''
+        Return the aws_access_key_id
+        '''
+        return self.cfgparser.get(profilename, 'aws_access_key_id')
+
+    def get_aws_secret_access_key(self, profilename):
+        '''
+        Return the aws_secret_access_key
+        '''
+        return self.cfgparser.get(profilename, 'aws_secret_access_key')
+
 
 class AwsService(object):
     '''
@@ -190,8 +202,6 @@ class AwsService(object):
                 bucket['objects'].append(objinfo)
             bucket['object_count'] = objcount
             bucket['object_size'] = objsize
-
-
 
     def create_bucket(self, bucket_name):
         '''
