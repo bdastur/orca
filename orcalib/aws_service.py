@@ -143,7 +143,7 @@ class AwsService(object):
         Update the bucket information with bucket policy.
 
         :type bucketlist: List of buckets (list of dictionaries)
-        : param bucketlist: List of buckets
+        :param bucketlist: List of buckets
 
         '''
 
@@ -155,6 +155,35 @@ class AwsService(object):
                 bucket['Policy'] = policydata['Policy']
             except botocore.exceptions.ClientError:
                 bucket['Policy'] = None
+
+    def populate_bucket_objects(self, bucketlist):
+        '''
+        Update the buckets information with list of objects.
+
+        :type bucketlist: List of buckets (list of dictionaries)
+        :param bucketlist: List of buckets
+
+        '''
+
+        for bucket in bucketlist:
+            profile = bucket['profile_name'][0]
+            objectdata = self.clients[profile].list_objects(
+                Bucket=bucket['Name'])
+            bucket['objects'] = []
+
+            try:
+                contents = objectdata['Contents']
+            except KeyError:
+                print "Key Error, name", bucket['Name']
+                bucket['objects'] = None
+                continue
+
+            for content in contents:
+                objinfo = {}
+                objinfo['Key'] = content['Key']
+                objinfo['Size'] = content['Size']
+                objinfo['LastModified'] = content['LastModified']
+                bucket['objects'].append(objinfo)
 
     def create_bucket(self, bucket_name):
         '''
