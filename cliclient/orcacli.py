@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+t
 # -*- coding: utf-8 -*-
 
 '''
@@ -51,7 +51,6 @@ class S3CommandHandler(object):
             table.add_row(row)
 
         print table
-
 
     def display_s3_summary(self, format='json'):
         '''
@@ -108,7 +107,6 @@ class OrcaCli(object):
 
         if namespace.summary is True:
             s3cmdhandler.display_s3_summary(format=namespace.output)
-
 
     def __parse_arguments(self):
         '''

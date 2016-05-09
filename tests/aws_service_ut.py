@@ -46,3 +46,15 @@ class AwsServiceUt(unittest.TestCase):
         for bucket in bucketlist:
             print "Bucket: ", bucket
 
+    def test_populate_bucket_objects(self):
+        print "Test api populate_bucket_location"
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.clients is not None)
+
+        bucketlist = service_client.list_buckets()
+        service_client.populate_bucket_objects(bucketlist)
+        for bucket in bucketlist:
+            print "Bucket: ", bucket
+
+
+
