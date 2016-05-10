@@ -62,8 +62,8 @@ class S3CommandHandler(object):
 
         '''
         service_client = aws_service.AwsService('s3')
-        bucketlist = service_client.list_buckets()
-        service_client.populate_bucket_location(bucketlist)
+        bucketlist = service_client.service.list_buckets()
+        service_client.service.populate_bucket_location(bucketlist)
 
         bucket_summary = {}
         for bucket in bucketlist:
@@ -142,9 +142,9 @@ class S3CommandHandler(object):
         Display the List of S3 buckets
         '''
         service_client = aws_service.AwsService('s3')
-        bucketlist = service_client.list_buckets()
-        service_client.populate_bucket_location(bucketlist)
-        service_client.populate_bucket_objects(bucketlist)
+        bucketlist = service_client.service.list_buckets()
+        service_client.service.populate_bucket_location(bucketlist)
+        service_client.service.populate_bucket_objects(bucketlist)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()

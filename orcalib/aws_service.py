@@ -1,77 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-from ConfigParser import SafeConfigParser
-import yaml
-import boto3
-import botocore
-
-
-class OrcaConfig(object):
-    '''
-    The class reads/manages the orcaenv.yaml file.
-    Ideally the file should be located in the same place as your
-    aws config file (~/.aws/orcaenv.yaml).
-    '''
-    def __init__(self):
-        '''
-        Initialize.
-        '''
-        homedir = os.environ.get("HOME", None)
-        if homedir is None:
-            print "ERROR: Home ENV is not set"
-            return
-        self.__orca_config = os.path.join(homedir, ".aws/orcaenv.yaml")
-        try:
-            fp = open(self.__orca_config)
-        except IOError as ioerr:
-            print "ERROR: Failed to open [%s] [%s]" % \
-                (self.__orca_config, ioerr)
-
-        try:
-            self.parsedyaml = yaml.safe_load(fp)
-        except yaml.error.YAMLError as yamlerr:
-            print "ERROR: Yaml parsing failed [file: %s] [%s]" % \
-                (self.__orca_config, yamlerr)
-            return
-
-
-class AwsConfig(object):
-    '''
-    The class provides functionality to read the was configuration.
-    '''
-    def __init__(self):
-        homedir = os.environ.get('HOME', None)
-        if homedir is None:
-            print "ERROR: HOME ENV is not set."
-            return
-        self.__config_file = os.path.join(homedir, ".aws/credentials")
-
-        if not os.path.exists(self.__config_file):
-            print "ERROR: No aws credentials/config file present"
-            return
-
-        self.cfgparser = SafeConfigParser()
-        self.cfgparser.read(self.__config_file)
-
-    def get_profiles(self):
-        '''
-        Return the profiles configured in the aws configuration file
-        '''
-        return self.cfgparser.sections()
-
-    def get_aws_access_key_id(self, profilename):
-        '''
-        Return the aws_access_key_id
-        '''
-        return self.cfgparser.get(profilename, 'aws_access_key_id')
-
-    def get_aws_secret_access_key(self, profilename):
-        '''
-        Return the aws_secret_access_key
-        '''
-        return self.cfgparser.get(profilename, 'aws_secret_access_key')
+#import os
+#import yaml
+#from ConfigParser import SafeConfigParser
+from orcalib.s3_service import AwsServiceS3
+from orcalib.ec2_service import AwsServiceEC2
 
 
 class AwsService(object):
@@ -110,131 +44,17 @@ class AwsService(object):
             be used with the default profile.
 
         '''
-        self.clients = {}
-        if profile_names is not None:
-            for profile_name in profile_names:
-                session = boto3.Session(profile_name=profile_name)
-                self.clients[profile_name] = session.client(service)
-        elif access_key_id is not None and secret_access_key is not None:
-            self.clients['default'] = boto3.client(
-                service,
-                aws_access_key_id=access_key_id,
-                aws_secret_access_key=secret_access_key)
+        if service == "s3":
+            self.service = AwsServiceS3(profile_names=profile_names,
+                                        access_key_id=access_key_id,
+                                        secret_access_key=secret_access_key)
+        elif service == "ec2":
+            self.service = AwsServiceEC2(profile_names=profile_names,
+                                         access_key_id=access_key_id,
+                                         secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
+            print "ERROR: Servicename [%s] not valid"
+            return
 
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = session.client(service)
 
-    def list_buckets(self, profile_names=None):
-        '''
-        Return all the buckets.
-
-        :type profile_names: List of Strings
-        :param profile_names: List of profiles. If Not set then get list
-            of buckets from all profiles/environments.
-
-        '''
-        bucketlist = []
-        for profile in self.clients.keys():
-            if profile_names is not None and \
-                    profile not in profile_names:
-                continue
-
-            buckets = self.clients[profile].list_buckets()
-
-            for bucket in buckets['Buckets']:
-                bucket['profile_name'] = []
-                # Before we add the bucket to the list check if it
-                # already exist. Since bucket is a global entity it
-                # could show up in multiple profiles if there are
-                # different profiles for same account/env with different
-                # regions
-                bucket_present = False
-                for savedbucket in bucketlist:
-                    if bucket['Name'] == savedbucket['Name']:
-                        savedbucket['profile_name'].append(profile)
-                        bucket_present = True
-                        break
-                if bucket_present is False:
-                    bucket['profile_name'].append(profile)
-                    bucketlist.append(bucket)
-                #bucketlist.append(bucket)
-        return bucketlist
-
-    def populate_bucket_location(self, bucketlist):
-        '''
-        Update the bucket information with bucket location.
-
-        :type bucketlist: List of bucket (list of dictionaries)
-        :param bucketlist: List of buckets
-
-        '''
-
-        for bucket in bucketlist:
-            profile = bucket['profile_name'][0]
-            locationdata = self.clients[profile].get_bucket_location(
-                Bucket=bucket['Name'])
-            bucket['LocationConstraint'] = locationdata['LocationConstraint']
-
-    def populate_bucket_policy(self, bucketlist):
-        '''
-        Update the bucket information with bucket policy.
-
-        :type bucketlist: List of buckets (list of dictionaries)
-        :param bucketlist: List of buckets
-
-        '''
-
-        for bucket in bucketlist:
-            profile = bucket['profile_name'][0]
-            try:
-                policydata = self.clients[profile].get_bucket_policy(
-                    Bucket=bucket['Name'])
-                bucket['Policy'] = policydata['Policy']
-            except botocore.exceptions.ClientError:
-                bucket['Policy'] = None
-
-    def populate_bucket_objects(self, bucketlist):
-        '''
-        Update the buckets information with list of objects.
-
-        :type bucketlist: List of buckets (list of dictionaries)
-        :param bucketlist: List of buckets
-
-        '''
-
-        for bucket in bucketlist:
-            profile = bucket['profile_name'][0]
-            objectdata = self.clients[profile].list_objects(
-                Bucket=bucket['Name'])
-            bucket['objects'] = []
-
-            try:
-                contents = objectdata['Contents']
-            except KeyError:
-                bucket['objects'] = None
-                bucket['object_count'] = 0
-                bucket['object_size'] = 0
-                continue
-
-            objcount = 0
-            objsize = 0
-            for content in contents:
-                objinfo = {}
-                objcount += 1
-                objsize = objsize + content['Size']
-                objinfo['Key'] = content['Key']
-                objinfo['Size'] = content['Size']
-                objinfo['LastModified'] = content['LastModified']
-                bucket['objects'].append(objinfo)
-            bucket['object_count'] = objcount
-            bucket['object_size'] = objsize
-
-    def create_bucket(self, bucket_name):
-        '''
-        test
-        '''
 
