@@ -12,6 +12,7 @@ import argparse
 import pprint
 import prettytable
 import orcalib.aws_service as aws_service
+import orcalib.aws_config as aws_config
 
 
 class S3CommandHandler(object):
@@ -169,7 +170,7 @@ class OrcaCli(object):
         '''
         Handle the profile operations
         '''
-        awsconfig = aws_service.AwsConfig()
+        awsconfig = aws_config.AwsConfig()
         profiles = awsconfig.get_profiles()
 
         profile_summary = {}
