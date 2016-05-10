@@ -3,8 +3,38 @@
 
 import os
 from ConfigParser import SafeConfigParser
+import yaml
 import boto3
 import botocore
+
+
+class OrcaConfig(object):
+    '''
+    The class reads/manages the orcaenv.yaml file.
+    Ideally the file should be located in the same place as your
+    aws config file (~/.aws/orcaenv.yaml).
+    '''
+    def __init__(self):
+        '''
+        Initialize.
+        '''
+        homedir = os.environ.get("HOME", None)
+        if homedir is None:
+            print "ERROR: Home ENV is not set"
+            return
+        self.__orca_config = os.path.join(homedir, ".aws/orcaenv.yaml")
+        try:
+            fp = open(self.__orca_config)
+        except IOError as ioerr:
+            print "ERROR: Failed to open [%s] [%s]" % \
+                (self.__orca_config, ioerr)
+
+        try:
+            self.parsedyaml = yaml.safe_load(fp)
+        except yaml.error.YAMLError as yamlerr:
+            print "ERROR: Yaml parsing failed [file: %s] [%s]" % \
+                (self.__orca_config, yamlerr)
+            return
 
 
 class AwsConfig(object):
@@ -207,5 +237,4 @@ class AwsService(object):
         '''
         test
         '''
-        pass
 

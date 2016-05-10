@@ -56,5 +56,10 @@ class AwsServiceUt(unittest.TestCase):
         for bucket in bucketlist:
             print "Bucket: ", bucket
 
+    def test_basic_orcaenv(self):
+        print "Test handling of the env yaml file"
+        service_client = aws_service.OrcaConfig()
+        print service_client.parsedyaml
+
 
 
