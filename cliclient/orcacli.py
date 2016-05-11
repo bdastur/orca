@@ -103,7 +103,7 @@ class S3CommandHandler(object):
         '''
         # Setup table
         header = ["Bucket Name", "Profile", "Location",
-                  "Total Objects", "Total Size"]
+                  "Total Objects", "Total Size", "Last Modified"]
         table = prettytable.PrettyTable(header)
 
         total_buckets = 0
@@ -117,14 +117,16 @@ class S3CommandHandler(object):
                 location = "Global"
             objcount = bucket['object_count']
             obj_totalsize = bucket['object_size']
-            row = [name, profile, location, objcount, obj_totalsize]
+            lastmodified = bucket['LastModified']
+            row = [name, profile, location,
+                   objcount, obj_totalsize, lastmodified]
             table.add_row(row)
 
             total_buckets += 1
             total_objects = total_objects + objcount
             total_objectsize = total_objectsize + obj_totalsize
 
-        row = ["-"*20, "-"*20, "-"*20, "-"*20, "-"*20]
+        row = ["-"*20, "-"*20, "-"*17, "-"*17, "-"*17, "-"*20]
         table.add_row(row)
 
         total_buckets = "Total: " + str(total_buckets)
@@ -133,7 +135,7 @@ class S3CommandHandler(object):
             total_objectsize = str(total_objectsize) + " KB"
 
         row = [total_buckets, " - ", " - ",
-               total_objects, total_objectsize]
+               total_objects, total_objectsize, " - "]
         table.add_row(row)
 
         print table
@@ -152,7 +154,6 @@ class S3CommandHandler(object):
             pprinter.pprint(bucketlist)
         else:
             self.display_s3_buckelist_table(bucketlist)
-
 
 
 class OrcaCli(object):
