@@ -128,10 +128,12 @@ class AwsServiceS3(object):
                 bucket['objects'] = None
                 bucket['object_count'] = 0
                 bucket['object_size'] = 0
+                bucket['LastModified'] = 0
                 continue
 
             objcount = 0
             objsize = 0
+            lastmodified = -1
             for content in contents:
                 objinfo = {}
                 objcount += 1
@@ -139,9 +141,15 @@ class AwsServiceS3(object):
                 objinfo['Key'] = content['Key']
                 objinfo['Size'] = content['Size']
                 objinfo['LastModified'] = content['LastModified']
+                if lastmodified == -1:
+                    lastmodified = objinfo['LastModified']
+                else:
+                    if lastmodified < objinfo['LastModified']:
+                        lastmodified = objinfo['LastModified']
                 bucket['objects'].append(objinfo)
             bucket['object_count'] = objcount
             bucket['object_size'] = objsize
+            bucket['LastModified'] = lastmodified
 
     def create_bucket(self, bucket_name):
         '''
