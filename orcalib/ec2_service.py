@@ -3,6 +3,7 @@
 
 import boto3
 from orcalib.aws_config import AwsConfig
+from orcalib.aws_config import OrcaConfig
 
 
 class AwsServiceEC2(object):
@@ -18,6 +19,9 @@ class AwsServiceEC2(object):
         Create a EC2 service client to one ore more environments by name.
         '''
         service = 'ec2'
+
+        orca_config = OrcaConfig()
+        self.regions = orca_config.get_regions()
         self.clients = {}
 
         if profile_names is not None:
@@ -35,9 +39,13 @@ class AwsServiceEC2(object):
 
             for profile in profiles:
                 session = boto3.Session(profile_name=profile)
-                self.clients[profile] = session.client(service)
+                self.clients[profile] = {}
+                for region in self.regions:
+                    self.clients[profile][region] = \
+                        session.client(service,
+                                       region_name=region)
 
-    def list_vms(self, profile_names=None):
+    def list_vms(self, profile_names=None, regions=None):
         '''
         Return all the buckets.
 
@@ -46,4 +54,34 @@ class AwsServiceEC2(object):
             of buckets from all profiles/environments.
 
         '''
-        pass
+        vm_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+
+                vms = self.clients[profile][region].describe_instances()
+                for vm in vms['Reservations']:
+                    vm['profile_name'] = []
+                    vm_present = False
+                    for savedvm in vm_list:
+                        if vm['ReservationId'] == savedvm['ReservationId']:
+                            savedvm['profile_name'].append(profile)
+                            vm_present = True
+                            break
+                    if vm_present is False:
+                        vm['region'] = region
+                        vm['profile_name'].append(profile)
+                        vm_list.append(vm)
+
+        return vm_list
+
+
+
+
+
+
