@@ -34,6 +34,15 @@ class OrcaConfig(object):
                 (self.__orca_config, yamlerr)
             return
 
+    def get_regions(self):
+        '''
+        Return the region list from the orcaenv config file
+        '''
+        try:
+            return (self.parsedyaml['regions'])
+        except KeyError:
+            return None
+
 
 class AwsConfig(object):
     '''

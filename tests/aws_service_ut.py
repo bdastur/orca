@@ -62,5 +62,22 @@ class AwsServiceUt(unittest.TestCase):
         service_client = aws_config.OrcaConfig()
         print service_client.parsedyaml
 
+    def test_get_regions(self):
+        print "Test the simple api to get regions"
+        service_client = aws_config.OrcaConfig()
+        regions = service_client.get_regions()
+        print regions
+
+    # EC2 testcases.
+    def test_list_vms(self):
+        print "Test simple usecase to list all ec2 instances"
+        service_client = aws_service.AwsService('ec2')
+        self.failUnless(service_client.service.clients is not None)
+
+        vmlist = service_client.service.list_vms()
+        for vm in vmlist:
+            print "VM: ", vm
+
+
 
 
