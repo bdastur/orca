@@ -13,6 +13,7 @@ import pprint
 import prettytable
 import orcalib.aws_config as aws_config
 from cliclient.s3_commandhelper import S3CommandHandler
+from cliclient.iam_commandhelper import IAMCommandHandler
 
 
 class OrcaCli(object):
@@ -25,6 +26,8 @@ class OrcaCli(object):
             self.perform_s3_operations(self.namespace)
         elif self.namespace.service == "profile":
             self.perform_profile_operations(self.namespace)
+        elif self.namespace.service == "iam":
+            self.perform_iam_operations(self.namespace)
 
     def perform_profile_operations(self, namespace):
         '''
@@ -68,6 +71,16 @@ class OrcaCli(object):
             s3cmdhandler.display_s3_summary(outputformat=namespace.output)
         elif namespace.list_buckets is True:
             s3cmdhandler.display_s3_bucketlist(outputformat=namespace.output)
+
+    def perform_iam_operations(self, namespace):
+        '''
+        Perform iam operations
+        '''
+        print "iam operations"
+        iam_cmdhandler = IAMCommandHandler()
+
+        if namespace.list_users:
+            iam_cmdhandler.display_iam_userlist(outputformat=namespace.output)
 
     def __parse_arguments(self):
         '''
