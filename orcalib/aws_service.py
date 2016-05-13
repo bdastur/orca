@@ -6,6 +6,7 @@
 #from ConfigParser import SafeConfigParser
 from orcalib.s3_service import AwsServiceS3
 from orcalib.ec2_service import AwsServiceEC2
+from orcalib.iam_service import AwsServiceIAM
 
 
 class AwsService(object):
@@ -52,6 +53,11 @@ class AwsService(object):
             self.service = AwsServiceEC2(profile_names=profile_names,
                                          access_key_id=access_key_id,
                                          secret_access_key=secret_access_key)
+        elif service == "iam":
+            self.service = AwsServiceIAM(profile_names=profile_names,
+                                         access_key_id=access_key_id,
+                                         secret_access_key=secret_access_key)
+
         else:
             print "ERROR: Servicename [%s] not valid"
             return

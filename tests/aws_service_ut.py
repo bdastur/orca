@@ -68,6 +68,16 @@ class AwsServiceUt(unittest.TestCase):
         regions = service_client.get_regions()
         print regions
 
+    # IAM testcases.
+    def test_list_users(self):
+        print "Test the iam api to list users"
+        service_client = aws_service.AwsService('iam')
+        self.failUnless(service_client.service.clients)
+
+        userlist = service_client.service.list_users()
+        print "Users: ", len(userlist)
+        print "Users: ", userlist
+
     # EC2 testcases.
     def test_list_vms(self):
         print "Test simple usecase to list all ec2 instances"
