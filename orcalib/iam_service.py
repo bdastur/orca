@@ -54,18 +54,19 @@ class AwsServiceIAM(object):
 
             users = self.clients[profile].list_users()
             for user in users['Users']:
-                user['profile_name'] = []
-                user_present = False
-                for saveduser in userlist:
-                    if saveduser['UserName'] == user['UserName']:
-                        saveduser['profile_name'].append(profile)
-                        user_present = True
-                        break
-
-                if user_present is False:
-                    user['profile_name'].append(profile)
-                    userlist.append(user)
+                user['profile_name'] = profile
+                userlist.append(user)
 
         return userlist
+
+    def populate_groups_in_users(self, userlist):
+        '''
+        Populate the user information with group membership
+        '''
+        for user in userlist:
+            profile = user['profile_name']
+            groupdata = self.clients[profile].list_groups_for_user(
+                UserName=user['UserName'])
+            user['Groups'] = groupdata['Groups']
 
 
