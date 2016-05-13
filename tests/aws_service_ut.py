@@ -78,6 +78,15 @@ class AwsServiceUt(unittest.TestCase):
         print "Users: ", len(userlist)
         print "Users: ", userlist
 
+    def test_populate_groups_in_users(self):
+        print "Test populate_groups_in_users"
+        service_client = aws_service.AwsService('iam')
+        self.failUnless(service_client.service.clients)
+
+        userlist = service_client.service.list_users()
+        service_client.service.populate_groups_in_users(userlist)
+        print "Users: ", userlist
+
     # EC2 testcases.
     def test_list_vms(self):
         print "Test simple usecase to list all ec2 instances"
