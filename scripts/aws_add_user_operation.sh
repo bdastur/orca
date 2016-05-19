@@ -12,6 +12,7 @@
 account=
 group=
 user=
+debug=false
 
 ####################################################
 # show_help: 
@@ -30,7 +31,7 @@ function show_help()
     echo ""
     echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
     echo ""
-    echo "-p policies  : [OPTIONAL] List of command seperated policies to be applied to the User if specified" 
+    echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified" 
     echo ""
     echo "-h              : To display this help"
     echo ""
@@ -42,6 +43,19 @@ function show_help()
     exit 1
 }
 
+function debug()
+{
+    local msg=$1
+    local msg2=$2
+
+    if [[ $debug ==  true ]]; then
+        if [[ $msg == "-n" ]]; then
+            echo -n $msg2
+        else
+            echo $msg
+        fi
+    fi
+}
 
 function validate_input()
 {
@@ -54,6 +68,8 @@ function validate_input()
         exit 1
     fi
 
+    echo "Validations: "
+    debug "-------------"
     # Validate account information.
     # Credinfo is an array of the groups.
     credinfo=($(cat ~/.aws/credentials | grep '^\['))
@@ -66,16 +82,42 @@ function validate_input()
         fi
     done
 
+    debug -n "Validating account.. "
     # Check if the account valid flag is set.
     if [[ $account_valid == true ]]; then
-        echo "Account is valid."
+        debug ": Account is valid."
     else
         echo "Error: Invalid Account provided \"$account\""
         echo "Valid values are: ${credinfo[@]}"
+        exit 1
     fi
 
+    # Validate groupname.
+    debug -n "Validating Groupname.. "
+    aws_group=$(aws iam list-groups --profile $account | grep $group)
+    if [[ -z $aws_group ]]; then
+        echo "Error: Invalid Group provided \"$group\""
+        exit 1
+    else
+        debug ": Group Valid: \"$group\""
+    fi
 
-    
+    # Check Policies.
+    #aws_policies=($(aws iam list-policies --profile ${account} | awk -F " " '{print $9}'))
+    debug "Validating Policies.. "
+    policyarr=($policies)
+    for policy in "${policyarr[@]}"
+    do
+        aws_policy=$(aws iam list-policies --profile ${account} | grep $policy)
+        if [[ -z $aws_policy ]]; then
+            echo "Error: Invalid Policy provided \"$policy\""
+            exit 1
+        fi
+        debug ": \"$policy\" Valid "
+    done
+    debug ": All policies Valid"
+    echo "Validations.. Complete"
+
 }
 
 
@@ -88,13 +130,16 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:g:p:u:h" option; do
+while getopts "a:dg:p:u:h" option; do
     case $option in
         h)
             show_help 
             ;;
         a) 
             account=$OPTARG
+            ;;
+        d) 
+            debug=true
             ;;
         g)
             group=$OPTARG
