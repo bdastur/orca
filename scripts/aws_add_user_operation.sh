@@ -14,6 +14,7 @@ group=
 user=
 debug=false
 create_accesskey=false
+create_logincredentials=false
 
 ####################################################
 # show_help: 
@@ -33,6 +34,10 @@ function show_help()
     echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
     echo ""
     echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified" 
+    echo ""
+    echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
+    echo ""
+    echo "-l login profile: [OPTIONAL] If specified create a login profile with a login password"
     echo ""
     echo "-h              : To display this help"
     echo ""
@@ -181,7 +186,6 @@ END
 
 function attach_user_policies()
 {
-    echo $policies
     if [[ -z $policies ]]; then
         echo "No User policies to attach."
         return
@@ -227,6 +231,51 @@ function create_access_key()
     fi
 }
 
+function create_login_credentials()
+{
+
+   tmpfile="/tmp/loginprofilerr.tmp"
+
+   if [[ $create_logincredentials == true ]]; then
+
+    python - << END
+import random
+import string
+import boto3
+import botocore
+
+
+size = 10
+chars = string.digits + string.ascii_letters + "[{}]"
+user_password = ''.join(random.choice(chars) for _ in range(size))
+user_password = user_password + "{"
+logincreds_file = "/tmp/$user" + "_logincredentials"
+
+session = boto3.Session(profile_name="${account}")
+iamclient = session.client('iam')
+try:
+    login_profile = iamclient.create_login_profile(UserName="$user", Password=user_password, PasswordResetRequired=True)
+    fp = open(logincreds_file, "w")
+    fp.write(str(login_profile))
+    fp.close()
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+    fp.close()
+
+END
+
+       if [[ -e $tmpfile ]]; then
+           echo "Failed to create login profile for $user"
+           rm $tmpfile
+           exit 1 
+       else
+           debug "Login profile for $user created"
+       fi 
+
+   fi 
+}
+
 
 if [[ $# -eq 0 ]]; then
     echo "Error: No options provided"
@@ -237,7 +286,7 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:cdg:p:u:h" option; do
+while getopts "a:cdg:lp:u:h" option; do
     case $option in
         h)
             show_help 
@@ -254,11 +303,14 @@ while getopts "a:cdg:p:u:h" option; do
         g)
             group=$OPTARG
             ;;
-        u) 
-            user=$OPTARG
+        l)
+            create_logincredentials=true
             ;;
         p)
             policies=$OPTARG
+            ;;
+        u)
+            user=$OPTARG
             ;;
         :) echo "Error: option \"-$OPTARG\" needs argument"; show_help;;
         *) echo "Error: Invalid option \"-$OPTARG\""; show_help;;
@@ -270,6 +322,7 @@ create_user
 add_user_to_group
 attach_user_policies
 create_access_key
+create_login_credentials
 
 
 
