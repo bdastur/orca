@@ -13,6 +13,7 @@ account=
 group=
 user=
 debug=false
+create_accesskey=false
 
 ####################################################
 # show_help: 
@@ -117,7 +118,113 @@ function validate_input()
     done
     debug ": All policies Valid"
     echo "Validations.. Complete"
+}
 
+function create_user()
+{
+    tmpfile="/tmp/ucreate.tmp"
+
+    python - << END
+import boto3 
+import botocore
+
+
+session = boto3.Session(profile_name="${account}")
+iamclient = session.client('iam')
+try:
+    iamuser = iamclient.create_user(UserName="$user")
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+    fp.close()
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to create user $user"
+        rm $tmpfile
+        exit 1
+    else
+        debug "User $user created."
+    fi
+}
+
+function add_user_to_group()
+{
+    tmpfile="/tmp/gadderr.tmp"
+
+    python - << END
+import boto3 
+import botocore
+
+
+session = boto3.Session(profile_name="${account}")
+iamclient = session.client('iam')
+try:
+    iamuser = iamclient.add_user_to_group(UserName="$user", GroupName="$group")
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+    fp.close()
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to Add user $user to group $group"
+        rm $tmpfile
+        exit 1
+    else
+        debug "User $user added to group $group"
+    fi
+
+}
+
+function attach_user_policies()
+{
+    echo $policies
+    if [[ -z $policies ]]; then
+        echo "No User policies to attach."
+        return
+    fi
+
+    tmpfile="/tmp/attachpolicyerr.tmp"
+    policyarr=($policies)
+    for policy in "${policyarr[@]}"
+    do
+        policy_arn=$(aws iam list-policies --profile $account | grep $policy | awk -F" " '{print $2}')
+
+    python - << END
+import boto3 
+import botocore
+
+session = boto3.Session(profile_name="${account}")
+iamclient = session.client('iam')
+try:
+    iamclient.attach_user_policy(UserName="$user", PolicyArn="$policy_arn")
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+    fp.close()
+
+END
+    done
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to attach policies to $user"
+        rm $tmpfile
+        exit 1
+    else
+        debug "Policies $policies attached to User $user"
+    fi
+}
+
+function create_access_key()
+{
+    accesskey_loc="/tmp/${user}_accesskey"
+    if [[ $create_accesskey == true ]]; then
+        accesskey=$(aws iam create-access-key --user-name  $user --profile $account --output json)
+        echo $accesskey >  $accesskey_loc
+    fi
 }
 
 
@@ -130,13 +237,16 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:dg:p:u:h" option; do
+while getopts "a:cdg:p:u:h" option; do
     case $option in
         h)
             show_help 
             ;;
         a) 
             account=$OPTARG
+            ;;
+        c)
+            create_accesskey=true
             ;;
         d) 
             debug=true
@@ -156,5 +266,10 @@ while getopts "a:dg:p:u:h" option; do
 done
 
 validate_input
+create_user
+add_user_to_group
+attach_user_policies
+create_access_key
+
 
 
