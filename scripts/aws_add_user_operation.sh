@@ -15,6 +15,8 @@ user=
 debug=false
 create_accesskey=false
 create_logincredentials=false
+policies_delimiter=false
+
 
 ####################################################
 # show_help: 
@@ -38,6 +40,8 @@ function show_help()
     echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
     echo ""
     echo "-l login profile: [OPTIONAL] If specified create a login profile with a login password"
+    echo ""
+    echo "-r Delimiter: [OPTIONAL] This flag is set when policies are passed with delimiter \":\""
     echo ""
     echo "-h              : To display this help"
     echo ""
@@ -111,6 +115,10 @@ function validate_input()
     # Check Policies.
     #aws_policies=($(aws iam list-policies --profile ${account} | awk -F " " '{print $9}'))
     debug "Validating Policies.. "
+    if [[ $policies_delimiter == true ]]; then
+        OFS=$IFS
+        IFS=":"
+    fi
     policyarr=($policies)
     for policy in "${policyarr[@]}"
     do
@@ -121,6 +129,10 @@ function validate_input()
         fi
         debug ": \"$policy\" Valid "
     done
+
+    if [[ $policies_delimiter == true ]]; then
+        IFS=$OFS
+    fi
     debug ": All policies Valid"
     echo "Validations.. Complete"
 }
@@ -192,6 +204,12 @@ function attach_user_policies()
     fi
 
     tmpfile="/tmp/attachpolicyerr.tmp"
+
+    if [[ $policies_delimiter == true ]]; then
+        OFS=$IFS
+        IFS=":"
+    fi
+
     policyarr=($policies)
     for policy in "${policyarr[@]}"
     do
@@ -212,6 +230,10 @@ except botocore.exceptions.ClientError as boto_exception:
 
 END
     done
+
+    if [[ $policies_delimiter == true ]]; then
+        IFS=$OFS
+    fi
 
     if [[ -e $tmpfile ]]; then
         echo "Error: Failed to attach policies to $user"
@@ -286,7 +308,7 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:cdg:lp:u:h" option; do
+while getopts "a:cdg:lp:ru:h" option; do
     case $option in
         h)
             show_help 
@@ -308,6 +330,9 @@ while getopts "a:cdg:lp:u:h" option; do
             ;;
         p)
             policies=$OPTARG
+            ;;
+        r)
+            policies_delimiter=true
             ;;
         u)
             user=$OPTARG
