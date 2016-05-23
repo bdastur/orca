@@ -57,8 +57,8 @@ def rundeck_list_groups():
     return jsonify(resp_obj)
 
 
-@app.route("/rundeck/iam/profiles/")
-def rundeck_list_iam_profiles():
+@app.route("/rundeck/iam/policies/")
+def rundeck_list_iam_policies():
     '''
     Return the list of profiles from all available profiles
     '''
