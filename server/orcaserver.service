@@ -1,0 +1,15 @@
+[Unit]
+Description=The ORCA Flask Server
+After=network.target
+
+[Service]
+ExecStart=/opt/orca/orcaserver.py
+ExecStop=/bin/kill -WINCH ${MAINPID}
+KillMode=process
+Restart=always
+RestartSec=0
+
+[Install]
+WantedBy=multi-user.target
+
+
