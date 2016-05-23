@@ -15,6 +15,7 @@ from flask import Flask
 from flask import jsonify
 import orcalib.aws_config as aws_config
 import boto3
+import botocore
 
 
 app = Flask(__name__)
@@ -29,6 +30,37 @@ def index():
     resp_obj = {}
     resp_obj['services'] = services
     return jsonify(resp_obj)
+
+
+
+@app.route("/iam/groups/")
+def list_groups_all_profiles():
+    '''
+    Return the list of groups from all available profiles
+    '''
+    resp_obj = {}
+    resp_obj['status'] = 'OK'
+
+    awsconfig = aws_config.AwsConfig()
+    groups = []
+    profiles = awsconfig.get_profiles()
+    for profile in profiles:
+        session = boto3.Session(profile_name=profile)
+        iamclient = session.client('iam')
+
+        try:
+            groupinfo = iamclient.list_groups()
+        except botocore.exceptions.ClientError:
+            groupinfo['Groups'] = []
+
+        for group in groupinfo['Groups']:
+            grouptext = "(%s) %s" % (profile, group['GroupName'])
+            groups.append(grouptext)
+
+    resp_obj['groups'] = groups
+
+    return jsonify(resp_obj)
+
 
 
 @app.route("/<profile>/iam/groups/")
@@ -53,7 +85,11 @@ def list_groups(profile):
     session = boto3.Session(profile_name=profile)
     iamclient = session.client('iam')
 
-    groupinfo = iamclient.list_groups()
+    try:
+        groupinfo = iamclient.list_groups()
+    except botocore.exceptions.ClientError:
+        groupinfo['Groups'] = []
+
     groups = []
     for group in groupinfo['Groups']:
         groups.append(group['GroupName'])
