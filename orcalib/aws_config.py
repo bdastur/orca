@@ -48,12 +48,22 @@ class AwsConfig(object):
     '''
     The class provides functionality to read the was configuration.
     '''
-    def __init__(self):
-        homedir = os.environ.get('HOME', None)
-        if homedir is None:
-            print "ERROR: HOME ENV is not set."
-            return
-        self.__config_file = os.path.join(homedir, ".aws/credentials")
+
+    def __init__(self, credentials=None):
+        '''
+        Initialize AwsConfig.
+
+        :type service: string
+        :param credentials: Absolute path to the credentials file to read.
+        '''
+        if credentials is None:
+            homedir = os.environ.get('HOME', None)
+            if homedir is None:
+                print "ERROR: HOME ENV is not set."
+                return
+            self.__config_file = os.path.join(homedir, ".aws/credentials")
+        else:
+            self.__config_file = credentials
 
         if not os.path.exists(self.__config_file):
             print "ERROR: No aws credentials/config file present"
