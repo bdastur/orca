@@ -15,7 +15,7 @@ user=
 debug=false
 create_accesskey=false
 create_logincredentials=false
-policies_delimiter=false
+delimiter=false
 
 
 ####################################################
@@ -41,7 +41,7 @@ function show_help()
     echo ""
     echo "-l login profile: [OPTIONAL] If specified create a login profile with a login password"
     echo ""
-    echo "-r Delimiter: [OPTIONAL] This flag is set when policies are passed with delimiter \":\""
+    echo "-r delimiter: [OPTIONAL] This flag is set when list arguments like policies are passed with delimiter \":\""
     echo ""
     echo "-h              : To display this help"
     echo ""
@@ -115,7 +115,7 @@ function validate_input()
     # Check Policies.
     #aws_policies=($(aws iam list-policies --profile ${account} | awk -F " " '{print $9}'))
     debug "Validating Policies.. "
-    if [[ $policies_delimiter == true ]]; then
+    if [[ $delimiter == true ]]; then
         OFS=$IFS
         IFS=":"
     fi
@@ -130,7 +130,7 @@ function validate_input()
         debug ": \"$policy\" Valid "
     done
 
-    if [[ $policies_delimiter == true ]]; then
+    if [[ $delimiter == true ]]; then
         IFS=$OFS
     fi
     debug ": All policies Valid"
@@ -205,7 +205,7 @@ function attach_user_policies()
 
     tmpfile="/tmp/attachpolicyerr.tmp"
 
-    if [[ $policies_delimiter == true ]]; then
+    if [[ $delimiter == true ]]; then
         OFS=$IFS
         IFS=":"
     fi
@@ -231,7 +231,7 @@ except botocore.exceptions.ClientError as boto_exception:
 END
     done
 
-    if [[ $policies_delimiter == true ]]; then
+    if [[ $delimiter == true ]]; then
         IFS=$OFS
     fi
 
@@ -332,7 +332,7 @@ while getopts "a:cdg:lp:ru:h" option; do
             policies=$OPTARG
             ;;
         r)
-            policies_delimiter=true
+            delimiter=true
             ;;
         u)
             user=$OPTARG
