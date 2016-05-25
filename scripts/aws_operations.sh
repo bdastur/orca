@@ -1,14 +1,27 @@
 #!/bin/bash
 
 ###################################################
-# Add a new User.
-# --------------
-# A new user creation requires the following parameters.
-# 1. User name: Name of the user
-# 2. Group Name: (optional) If provided the user will be added to that group
-# 3. Policy list: Any AWS IAM Policies that need to be applied to the user.
+# Common AWS CLI operations
+# -------------------------
+#
+# Justification:
+# Ok, so why have another CLI wrapper for AWS operations, when we
+# already have aws cli.
+# 
+# I like examples. Adding a new user account. Pretty basic, and you
+# can use AWS CLI to do that as simply. But in reality adding a 
+# new user account will require several operations like -
+#  adding a user, adding the user to a group, attaching policies
+# Now you would have to figure out the correct policy-arn for the 
+# policy you want to add.
+#
+# This is the sort of complex scenario that we can solve. Also we 
+# can do validation checks beforehand to make sure we perform
+# operations.
+#
 ####################################################
 
+# Globals.
 account=
 group=
 user=
@@ -16,12 +29,9 @@ debug=false
 create_accesskey=false
 create_logincredentials=false
 delimiter=false
+operations=
 
-curdir=`pwd`
-echo "curdir: $curdir"
-echo "file: $0"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "DIR: $DIR"
 
 
 function debug()
@@ -51,6 +61,8 @@ function show_help()
     echo "`basename $0`  : ORCA - AWS Create User Script"
     echo "-------------------------------------------------"
     echo "usage: aws_add_user_operation -a account-name -u username [-g groupname] [-p policy1,policy2...] "
+    echo ""
+    echo "-o operations: Specify the operations to perform"
     echo ""
     echo "-a account   : Specifiy the account name where the new user should be created."
     echo ""
@@ -157,7 +169,7 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:cdg:lp:ru:h" option; do
+while getopts "a:cdg:lo:p:ru:h" option; do
     case $option in
         h)
             show_help 
@@ -177,6 +189,9 @@ while getopts "a:cdg:lp:ru:h" option; do
         l)
             create_logincredentials=true
             ;;
+        o)
+            operations=$OPTARG
+            ;;
         p)
             policies=$OPTARG
             ;;
@@ -190,6 +205,8 @@ while getopts "a:cdg:lp:ru:h" option; do
         *) echo "Error: Invalid option \"-$OPTARG\""; show_help;;
     esac
 done
+
+
 
 validate_input
 create_user
