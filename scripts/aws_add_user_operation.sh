@@ -16,6 +16,7 @@ debug=false
 create_accesskey=false
 create_logincredentials=false
 delimiter=false
+force_password=
 
 
 ####################################################
@@ -34,6 +35,8 @@ function show_help()
     echo "-u username  : Specify a user name that needs to be created."
     echo ""
     echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
+    echo ""
+    echo "-f password  : [OPTIONAL] Instead of randomly generated password. Force the password from CLI"
     echo ""
     echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified" 
     echo ""
@@ -259,6 +262,11 @@ function create_login_credentials()
    tmpfile="/tmp/loginprofilerr.tmp"
 
    if [[ $create_logincredentials == true ]]; then
+       if [[ ! -z $force_password ]]; then
+           password_flag="True"
+       else
+           password_flag="False"
+       fi 
 
     python - << END
 import random
@@ -269,8 +277,14 @@ import botocore
 
 size = 10
 chars = string.digits + string.ascii_letters + "[{}]"
-user_password = ''.join(random.choice(chars) for _ in range(size))
-user_password = user_password + "{"
+
+if "$password_flag" == "True":
+    user_password = "$force_password"
+else:
+    user_password = ''.join(random.choice(chars) for _ in range(size))
+    user_password = user_password + "{"
+
+print "Userpass: ", user_password
 logincreds_file = "/tmp/$user" + "_logincredentials"
 
 session = boto3.Session(profile_name="${account}")
@@ -279,6 +293,7 @@ try:
     login_profile = iamclient.create_login_profile(UserName="$user", Password=user_password, PasswordResetRequired=True)
     fp = open(logincreds_file, "w")
     fp.write(str(login_profile))
+    fp.write(user_password)
     fp.close()
 except botocore.exceptions.ClientError as boto_exception:
     print "[%s] " % boto_exception
@@ -308,7 +323,7 @@ fi
 
 readonly COMMANDLINE="$*"
 
-while getopts "a:cdg:lp:ru:h" option; do
+while getopts "a:cdf:g:lp:ru:h" option; do
     case $option in
         h)
             show_help 
@@ -321,6 +336,9 @@ while getopts "a:cdg:lp:ru:h" option; do
             ;;
         d) 
             debug=true
+            ;;
+        f)
+            force_password=$OPTARG
             ;;
         g)
             group=$OPTARG
