@@ -12,6 +12,7 @@ import argparse
 import pprint
 import prettytable
 import orcalib.aws_config as aws_config
+from cliclient.ec2_commandhelper import EC2CommandHandler
 from cliclient.s3_commandhelper import S3CommandHandler
 from cliclient.iam_commandhelper import IAMCommandHandler
 
@@ -22,7 +23,9 @@ class OrcaCli(object):
         print "Namespace: ", self.namespace
         if self.namespace.output is None:
             self.namespace.output = "table"
-        if self.namespace.service == "s3":
+        if self.namespace.service == "ec2":
+            self.perform_ec2_operations(self.namespace)
+        elif self.namespace.service == "s3":
             self.perform_s3_operations(self.namespace)
         elif self.namespace.service == "profile":
             self.perform_profile_operations(self.namespace)
@@ -60,6 +63,18 @@ class OrcaCli(object):
 
             print table
 
+    def perform_ec2_operations(self, namespace):
+        '''
+        Perform EC2 operations
+        '''
+        print "ec2 operations"
+        ec2cmdhandler = EC2CommandHandler()
+
+        if namespace.summary is True:
+            ec2cmdhandler.display_ec2_summary(outputformat=namespace.output)
+        elif namespace.list_vms is True:
+            ec2cmdhandler.display_ec2_vmlist(outputformat=namespace.output)
+
     def perform_s3_operations(self, namespace):
         '''
         Perform S3 operations
@@ -94,6 +109,8 @@ class OrcaCli(object):
         subparser = parser.add_subparsers(dest="service",
                                           help="Service type")
 
+        ec2parser = subparser.add_parser("ec2",
+                                        help="AWS Elastic Compute Service")
         s3parser = subparser.add_parser("s3",
                                         help="AWS Simple Storage Service")
         iamparser = subparser.add_parser("iam",
@@ -109,6 +126,19 @@ class OrcaCli(object):
         profile_parser.add_argument("--list",
                                     action="store_true",
                                     help="List AWS Profiles (~/.aws/config)")
+
+        # EC2 group
+        ec2parser.add_argument("--output",
+                              help="Output format {json, table}")
+
+        ec2group = ec2parser.add_mutually_exclusive_group()
+        ec2group.add_argument("--list-vms",
+                             dest="list_vms",
+                             action="store_true")
+
+        ec2group.add_argument("--summary",
+                             dest="summary",
+                             action="store_true")
 
         # S3 group.
         s3parser.add_argument("--output",
