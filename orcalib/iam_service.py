@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
+import botocore
 from orcalib.aws_config import AwsConfig
 
 
@@ -68,5 +69,86 @@ class AwsServiceIAM(object):
             groupdata = self.clients[profile].list_groups_for_user(
                 UserName=user['UserName'])
             user['Groups'] = groupdata['Groups']
+
+    def get_user_attached_policies(self,
+                                   UserName=None,
+                                   profile_name=None):
+        '''
+        Return all policies attached to user or a group to which
+        the user belongs.
+        '''
+        if UserName is None or profile_name is None:
+            print "Error: Expected UserName and profile_name"
+            return None
+
+        client = self.clients[profile_name]
+
+        try:
+            client.get_user(UserName=UserName)
+        except botocore.exceptions.ClientError as clienterr:
+            print "No User %s found [%s]" % (UserName, clienterr)
+
+        user_groups = client.list_groups_for_user(UserName=UserName)
+
+        policies = []
+        # Get policies attached to groups
+        for group in user_groups['Groups']:
+            group_policies = client.list_attached_group_policies(
+                GroupName=group['GroupName'])
+            for policy in group_policies['AttachedPolicies']:
+                policies.append(policy)
+
+
+        # Get policies attached to user
+        user_policies = client.list_attached_user_policies(
+            UserName=UserName)
+        for policy in user_policies['AttachedPolicies']:
+            policies.append(policy)
+
+        return policies
+
+    def get_user_permissions(self,
+                             UserName=None,
+                             profile_name=None):
+        '''
+        Return all the permissions information for a given user
+        '''
+        if UserName is None or profile_name is None:
+            print "Error: Expected UserName and profile_name"
+            return None
+
+        client = self.clients[profile_name]
+
+        try:
+            client.get_user(UserName=UserName)
+        except botocore.exception.ClientError as clienterr:
+            print "No User %s found [%s]" % (UserName, clienterr)
+            return None
+
+        policies = self.get_user_attached_policies(UserName=UserName,
+                                                   profile_name=profile_name)
+
+        statements = []
+        for policy in policies:
+            policy_version_info = client.list_policy_versions(
+                PolicyArn=policy['PolicyArn'])
+            # Now that we have version info, select only
+            # the policy that is default.
+            for version in policy_version_info['Versions']:
+                if version['IsDefaultVersion'] is True:
+                    policy_data = client.get_policy_version(
+                        PolicyArn=policy['PolicyArn'],
+                        VersionId=version['VersionId'])
+                    policy_statements = \
+                        policy_data['PolicyVersion']['Document']['Statement']
+                    for statement in policy_statements:
+                        statements.append(statement)
+
+        return statements
+
+
+
+
+
 
 

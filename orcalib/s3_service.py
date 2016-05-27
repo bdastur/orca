@@ -52,8 +52,12 @@ class AwsServiceS3(object):
             if profile_names is not None and \
                     profile not in profile_names:
                 continue
+            try:
+                buckets = self.clients[profile].list_buckets()
+            except botocore.exceptions.ClientError as clienterr:
+                print "Client Error: [%s] [%s] " % (profile, clienterr)
+                continue
 
-            buckets = self.clients[profile].list_buckets()
 
             for bucket in buckets['Buckets']:
                 bucket['profile_name'] = []
