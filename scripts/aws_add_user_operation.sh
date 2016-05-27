@@ -280,9 +280,11 @@ chars = string.digits + string.ascii_letters + "[{}]"
 
 if "$password_flag" == "True":
     user_password = "$force_password"
+    reset_required = False 
 else:
     user_password = ''.join(random.choice(chars) for _ in range(size))
     user_password = user_password + "{"
+    reset_required = True
 
 print "Userpass: ", user_password
 logincreds_file = "/tmp/$user" + "_logincredentials"
@@ -290,7 +292,7 @@ logincreds_file = "/tmp/$user" + "_logincredentials"
 session = boto3.Session(profile_name="${account}")
 iamclient = session.client('iam')
 try:
-    login_profile = iamclient.create_login_profile(UserName="$user", Password=user_password, PasswordResetRequired=True)
+    login_profile = iamclient.create_login_profile(UserName="$user", Password=user_password, PasswordResetRequired=reset_required)
     fp = open(logincreds_file, "w")
     fp.write(str(login_profile))
     fp.write(user_password)
