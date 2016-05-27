@@ -96,6 +96,10 @@ class OrcaCli(object):
 
         if namespace.list_users:
             iam_cmdhandler.display_iam_userlist(outputformat=namespace.output)
+        elif namespace.list_user_permissions:
+            iam_cmdhandler.display_iam_user_permissions(
+                namespace.list_user_permissions,
+                outputformat=namespace.output)
 
     def __parse_arguments(self):
         '''
@@ -162,6 +166,10 @@ class OrcaCli(object):
         iamgroup.add_argument("--list-users",
                               dest="list_users",
                               action="store_true")
+
+        iamgroup.add_argument("--list-user-permissions",
+                              dest="list_user_permissions",
+                              help="List permission for specific user")
 
         namespace = parser.parse_args()
 

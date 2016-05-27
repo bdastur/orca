@@ -80,5 +80,23 @@ class IAMCommandHandler(object):
         else:
             self.display_iam_userlist_table(userlist)
 
+    def display_iam_user_permissions(self, user_name, outputformat='json'):
+        '''
+        Display Permissions for user
+        '''
+        awsconfig = aws_config.AwsConfig()
+        profiles = awsconfig.get_profiles()
+
+        service_client = aws_service.AwsService('iam')
+
+        for profile in profiles:
+            permissions = service_client.service.get_user_permissions(
+                UserName=user_name, profile_name=profile)
+
+            if outputformat == "json":
+                print "\n(%s: %s) " % (profile, user_name)
+                print "========================================="
+                pprinter = pprint.PrettyPrinter()
+                pprinter.pprint(permissions)
 
 

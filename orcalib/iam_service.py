@@ -86,7 +86,8 @@ class AwsServiceIAM(object):
         try:
             client.get_user(UserName=UserName)
         except botocore.exceptions.ClientError as clienterr:
-            print "No User %s found [%s]" % (UserName, clienterr)
+            print "[%s: %s] User not found [%s]" % \
+                (profile_name, UserName, clienterr)
 
         user_groups = client.list_groups_for_user(UserName=UserName)
 
@@ -121,8 +122,9 @@ class AwsServiceIAM(object):
 
         try:
             client.get_user(UserName=UserName)
-        except botocore.exception.ClientError as clienterr:
-            print "No User %s found [%s]" % (UserName, clienterr)
+        except botocore.exceptions.ClientError as clienterr:
+            print "[%s : %s ] User not found [%s]" % \
+                (profile_name, UserName, clienterr)
             return None
 
         policies = self.get_user_attached_policies(UserName=UserName,
