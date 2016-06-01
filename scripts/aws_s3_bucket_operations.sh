@@ -132,8 +132,23 @@ readonly COMMANDLINE="$*"
 # Once we parse it 'shift' all the command line arguments
 # one position to the left.
 #######################################
-operation=
+
+# Get service type.
 case $1 in
+    iam)
+        echo "IAM Service Operations"
+        service_type=$1
+        ;;
+    s3)
+        echo "S3 Service Operations"
+        service_type=$1
+        ;;
+    :) echo "No option"; show_help;;
+    *) echo "Invalid Service"; show_help;;
+esac
+
+# Get operation.
+case $2 in
     create-bucket)
         echo "Create bucket"
         operation="create-bucket"
@@ -142,6 +157,8 @@ case $1 in
     *) echo "Invalid operation"; show_help;;
 esac
 
+## Remove the positional arguments.
+shift
 shift
 
 

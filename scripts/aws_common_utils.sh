@@ -194,7 +194,7 @@ for resource in resources:
 
     statementobj['Resource'].append(resource_arn)
 
-    statementobj['Sid'] = "${resource_type}".upper() + resources[0] + "${effect}".upper() + "$(date +%s)"
+    statementobj['Sid'] = "${resource_type}".upper() + "${effect}".upper() + "$(date +%s)"
 
 if "$effect".lower() == "allow":
     effect="Allow"
