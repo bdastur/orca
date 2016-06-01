@@ -64,7 +64,7 @@ function debug()
 }
 
 # Source helper scripts.
-source $DIR/aws_iam_operations.sh
+source $DIR/aws_common_utils.sh
 
 
 function validate_input()
