@@ -1,8 +1,6 @@
 #!/bin/bash
 
 services="ec2 iam s3"
-#s3_operations="create-bucket delete-bucket list-buckets"
-#iam_operations="create-user delete-user list-policies"
 
 operations['s3']="create-bucket delete-bucket list-buckets"
 operations['iam']="create-user delete-user list-policies"
@@ -13,8 +11,8 @@ function find_options()
 {
     local lastoption=$1
     local stage=$2
-    echo "last option: $lastoption, stage: $stage"
-    echo ""
+    #echo "last option: $lastoption, stage: $stage"
+    #echo ""
 
     if [[ $stage = 1 ]]; then
         COMPREPLY=($services)
@@ -38,7 +36,6 @@ function find_options()
             for service in "${servicearr[@]}"
             do
                 if [[ $service = ${lastoption}* ]]; then
-                    echo "service matched: $service"
                     newarr="${newarr} $service"
                 fi  
             done 
@@ -47,11 +44,9 @@ function find_options()
     elif [[ $stage = 3 ]]; then
         # Stage 3. We are at service level operations.
         operationarr=($operations[$service_type])
-        echo "Operation arr: $operationarr"
         operation_match=false
         for operation in "${operationarr[@]}"
         do
-          echo "operation: $operation"
           if [[ $operation = $lastoption ]]; then
               operation_match=true
               break
