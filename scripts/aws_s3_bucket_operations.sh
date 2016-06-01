@@ -117,46 +117,6 @@ function validate_input()
 }
 
 
-function s3_create_bucket()
-{
-    echo "Creating bucket"
-    local bucketname=$1
-    local account_name=$2
-
-    tmpfile="/tmp/s3bucketcreate_err.tmp"
-
-    # Use Python boto3 API to create bucket.
-    # Reason for this is aws cli does not return a correct
-    # error code when it fails. This results in parsing the
-    # output and looking for error.
-    python - << END
-
-import boto3
-import botocore
-
-session = boto3.Session(profile_name="${account_name}")
-s3client = session.client('s3')
-
-try:
-    retcode = s3client.create_bucket(Bucket="${bucketname}")
-except botocore.exceptions.ClientError as boto_exception:
-    print "[%s] " % boto_exception
-    fp = open("${tmpfile}", "w")
-    fp.close()
-
-END
-
-    if [[ -e $tmpfile ]]; then
-        echo "Error: Failed to create bucket $bucketname"
-        rm $tmpfile
-        exit 1
-    else
-        debug "S3 Bucket $bucketname created successfully"
-    fi
-
-}
-
-
 if [[ $# -eq 0 ]]; then
     echo "Error: No options provided"
     echo "For Usage, execute:  `basename $0` -h"
@@ -204,8 +164,17 @@ while getopts "a:b:dh" option; do
     esac
 done
 
-validate_input
-s3_create_bucket $bucketname $account
+if [[ $operation = "create-bucket" ]]; then
+    validate_input
+    s3_create_bucket $bucketname $account
+    create_s3_access_managed_policy $account $bucketname 'Allow'
+else
+    echo "Operation: $operation... NotImplemented"
+fi
+
+
+
+
 
 
 

@@ -2,9 +2,7 @@
 
 ###################################################
 # IAM Operations.
-# --------------
-####################################################
-
+###################################################
 
 
 function create_user()
@@ -164,8 +162,162 @@ END
        else
            debug "Login profile for $user created"
        fi 
-
    fi 
+}
+
+#################################
+# IAM Policy Creation  Functions.
+#################################
+
+function create_policy_statement()
+{
+    local resource_type=$1
+    local resources=$2
+    local effect=$3
+    local actions=$4
+    local tmpfile="/tmp/policystmt-$(date +%s)"
+
+    python - << END
+import json
+import sys
+
+#statement = [] 
+statementobj = {}
+
+statementobj['Resource'] = []
+resources = "${resources}".split()
+
+for resource in resources:
+    resource_arn = resource
+    if "${resource_type}".lower() == 's3':
+        resource_arn = "arn:aws:s3:::" + resource 
+
+    statementobj['Resource'].append(resource_arn)
+
+    statementobj['Sid'] = "${resource_type}".upper() + resources[0] + "${effect}".upper() + "$(date +%s)"
+
+if "$effect".lower() == "allow":
+    effect="Allow"
+else:
+    effect="Deny"
+
+statementobj['Effect'] =  effect
+statementobj['Action'] = []
+
+for action in "${actions}".split(" "):
+    statementobj['Action'].append(action)
+
+
+#statement.append(statementobj)
+
+with  open("${tmpfile}", "w") as stmtfile:
+    jsonobj = json.dumps(statementobj, sort_keys=False, indent=4, ensure_ascii=False)
+    stmtfile.write(jsonobj)
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        cat $tmpfile
+        rm $tmpfile
+    fi
+
+}
+
+function create_policy_file()
+{
+    local resource_type=$1
+    local resources=$2
+    local effect=$3
+    local actions=$4
+    tmpfile="/tmp/iampolicy_$(date +%s)"
+
+    policy_stmt=$(create_policy_statement "$resource_type" "$resources" "$effect" "$actions")
+
+    python - << END
+import json
+
+policy={}
+policy["Version"] = "2012-10-17"
+policy["Statement"] = []
+policy["Statement"].append(${policy_stmt})
+
+jsonobj = json.dumps(policy, sort_keys=False, indent=4, ensure_ascii=False)
+
+with open("${tmpfile}", "w") as policyfile:
+    policyfile.write(jsonobj)
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        echo $tmpfile
+    fi
+
+}
+
+
+function create_s3_access_managed_policy()
+{
+    echo "Create S3 managed policy"
+    local account_name=$1
+    local bucketname=$2
+    local effect=$3
+
+    local resource_type='s3'
+    local resources="$bucketname ${bucketname}/*"
+    local actions="s3:CreateBucket s3:ListBuckets s3:*"
+
+    policy_file=$(create_policy_file "$resource_type" "$resources" "$effect" "$actions")
+
+    echo "Policy file: $policy_file"
+    cat $policy_file
+    policy_name="$resource_type-${bucketname}-AccessPolicy"
+    echo "Policy name: $policy_name"
+
+    aws iam create-policy --policy-name ${policy_name} --policy-document file://${policy_file} --profile ${account_name}
+
+}
+
+##################################################
+# S3 Operations
+##################################################
+
+function s3_create_bucket()
+{
+    echo "Creating bucket"
+    local bucketname=$1
+    local account_name=$2
+
+    tmpfile="/tmp/s3bucketcreate_err.tmp"
+
+    # Use Python boto3 API to create bucket.
+    # Reason for this is aws cli does not return a correct
+    # error code when it fails. This results in parsing the
+    # output and looking for error.
+    python - << END
+
+import boto3
+import botocore
+
+session = boto3.Session(profile_name="${account_name}")
+s3client = session.client('s3')
+
+try:
+    retcode = s3client.create_bucket(Bucket="${bucketname}")
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", "w")
+    fp.close()
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to create bucket $bucketname"
+        rm $tmpfile
+        exit 1
+    else
+        debug "S3 Bucket $bucketname created successfully"
+    fi
+
 }
 
 
