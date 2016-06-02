@@ -1,5 +1,40 @@
 #!/bin/bash
 
+
+###################################################
+# Common Tasks.
+###################################################
+
+function debug()
+{
+    local msg=$1
+    local msg2=$2
+    local logfile=$3
+
+    if [[ -z $logfile ]]; then
+        logfile=$ORCA_LOGFILE
+    fi
+
+    if [[ $debug =  true ]]; then
+        if [[ $msg = "-n" ]]; then
+            echo -n $msg2 >> $logfile
+        else
+            echo $msg >> $logfile
+        fi
+    fi
+}
+
+function exit_log()
+{
+    curr_debug=$debug
+    debug=true
+    debug " "
+    debug "[ END: $(date +%D:%H:%M:%S) ]"
+    debug "-----------------------------------"
+    debug " "
+    exit 1
+}
+
 ###################################################
 # IAM Operations.
 ###################################################
@@ -28,7 +63,7 @@ END
     if [[ -e $tmpfile ]]; then
         echo "Error: Failed to create user $user"
         rm $tmpfile
-        exit 1
+        exit_log
     else
         debug "User $user created."
     fi
@@ -57,7 +92,7 @@ END
     if [[ -e $tmpfile ]]; then
         echo "Error: Failed to Add user $user to group $group"
         rm $tmpfile
-        exit 1
+        exit_log
     else
         debug "User $user added to group $group"
     fi
@@ -106,7 +141,7 @@ END
     if [[ -e $tmpfile ]]; then
         echo "Error: Failed to attach policies to $user"
         rm $tmpfile
-        exit 1
+        exit_log
     else
         debug "Policies $policies attached to User $user"
     fi
@@ -158,7 +193,7 @@ END
        if [[ -e $tmpfile ]]; then
            echo "Failed to create login profile for $user"
            rm $tmpfile
-           exit 1 
+           exit_log
        else
            debug "Login profile for $user created"
        fi 
@@ -313,7 +348,7 @@ END
     if [[ -e $tmpfile ]]; then
         echo "Error: Failed to create bucket $bucketname"
         rm $tmpfile
-        exit 1
+        exit_log
     else
         debug "S3 Bucket $bucketname created successfully"
     fi

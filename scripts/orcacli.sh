@@ -1,8 +1,25 @@
 #!/bin/bash
 
 ###################################################
-# S3 Operations:
-# --------------
+# ORCA CLI Handler:
+# ----------------
+# orcacli: Is a command line management utility to manage
+# AWS cloud. 
+#
+# Where AWS CLI provides a very useful and exhaustive CLI
+# to perform various operations, orca CLI provides an encompassing
+# functionality.
+#
+# To illustrate that, consider and example of adding a user account.
+# Pretty basic task on one hand which can be accomplished with one
+# AWS CLI command, but in reality adding a new user account will require
+# several operations like: adding a user, adding a user to a group
+# attaching policies. For this would have to figure out correct policy-arn
+#
+# This is a scenario that can be accomplished with orca CLI with a single
+# command.
+#
+# <TODO: More examples>
 ####################################################
 
 account=
@@ -50,25 +67,6 @@ function show_help()
     exit 1
 }
 
-function debug()
-{
-    local msg=$1
-    local msg2=$2
-    local logfile=$3
-
-    if [[ -z $logfile ]]; then
-        logfile=$ORCA_LOGFILE
-    fi
-
-    if [[ $debug =  true ]]; then
-        if [[ $msg = "-n" ]]; then
-            echo -n $msg2 >> $logfile
-        else
-            echo $msg >> $logfile
-        fi
-    fi
-}
-
 
 # Source helper scripts.
 source $DIR/orca_cmdline.sh
@@ -83,7 +81,7 @@ function validate_input()
         echo "Error: Required Arguments -b <bucketname> and -a <account> not provided."
         echo "For Usage, execute:  `basename $0` -h"
         echo ""
-        exit 1
+        exit_log
     fi
 
     ##############################################
@@ -107,7 +105,7 @@ function validate_input()
     else
         echo "Error: Invalid Account provided \"$account\""
         echo "Valid values are: ${credinfo[@]}"
-        exit 1
+        exit_log
     fi
 
     # Validate if bucket exists.
@@ -117,7 +115,7 @@ function validate_input()
     do
         if [[ $bucket = $bucketname ]]; then
             echo "Bucket with name $bucketname already exists"
-            exit 1
+            exit_log
         fi 
     done
 
@@ -157,7 +155,6 @@ validate_operation_type $service_type $operation
 shift
 
 
-
 CMD_OPTIONS="a:b:dh"
 
 while getopts ${CMD_OPTIONS} option; do
@@ -182,10 +179,11 @@ done
 # Log msg
 curr_debug=$debug
 debug=true
-debug "[ START: $(date +%D:%H:%M:%S) ] -------------------"
+debug "----------------------------------"
+debug "[ START: $(date +%D:%H:%M:%S) ]"
 debug "[ Service: $service_type| Operation: $operation ]"
 debug "[ OPTIONS: Account: $account| Bucket Name: $bucketname ]"
-debug " ---------------------------------"
+debug "..."
 debug=$curr_debug
 
 
@@ -204,9 +202,6 @@ elif [[ $operation = "create-user" ]]; then
 fi
 
 #Log End msg.
-curr_debug=$debug
-debug=true
-debug "--------------------------------- [ END ]"
-debug " "
+exit_log
 
 
