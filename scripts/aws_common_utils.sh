@@ -355,3 +355,23 @@ END
 
 }
 
+function s3_list_summary()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi
+
+    echo "List summary"
+    python - << END
+from cliclient.s3_commandhelper import S3CommandHandler
+
+
+s3cmdhandler = S3CommandHandler()
+s3cmdhandler.display_s3_summary(outputformat="${outputformat}")
+
+END
+
+}
+

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 services="ec2 iam s3"
-s3_operations="create-bucket delete-bucket list-buckets"
-iam_operations="create-user delete-user list-policies"
+s3_operations="create-bucket delete-bucket list-buckets list-summary "
+iam_operations="create-user delete-user list-policies list-users"
 
 
 ################################################
