@@ -12,4 +12,4 @@ export PYTHONPATH=${pythonpath}
 # Source the orca cmdline completion script
 source ${cmdline_completion}
 
-alias orcacli.sh="$DIR/scripts/aws_s3_bucket_operations.sh"
+alias orcacli.sh="$DIR/scripts/orcacli.sh"
