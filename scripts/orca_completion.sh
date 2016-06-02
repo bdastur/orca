@@ -5,8 +5,11 @@ services="ec2 iam s3"
 operations['s3']="create-bucket delete-bucket list-buckets"
 operations['iam']="create-user delete-user list-policies"
 
-s3_operations="create-bucket delete-bucket list-buckets"
-iam_operations="create-user delete-user list-policies"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$DIR/orca_cmdline.sh"
+
+#s3_operations="create-bucket delete-bucket list-buckets"
+#iam_operations="create-user delete-user list-policies"
 
 
 service_type=

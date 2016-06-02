@@ -191,6 +191,8 @@ if [[ $operation = "create-bucket" ]]; then
     validate_input
     s3_create_bucket $bucketname $account
     create_s3_access_managed_policy $account $bucketname 'Allow'
+elif [[ $operation = "list-summary" ]]; then
+    s3_list_summary
 elif [[ $operation = "create-user" ]]; then
     echo "Operation: $operation... NotImplemented"
     #validate_input
