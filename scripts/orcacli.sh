@@ -11,6 +11,7 @@ operation=
 debug=false
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ORCA_LOGFILE="/tmp/orcalog"
 
 ####################################################
 # show_help: 
@@ -53,15 +54,21 @@ function debug()
 {
     local msg=$1
     local msg2=$2
+    local logfile=$3
 
-    if [[ $debug ==  true ]]; then
-        if [[ $msg == "-n" ]]; then
-            echo -n $msg2
+    if [[ -z $logfile ]]; then
+        logfile=$ORCA_LOGFILE
+    fi
+
+    if [[ $debug =  true ]]; then
+        if [[ $msg = "-n" ]]; then
+            echo -n $msg2 >> $logfile
         else
-            echo $msg
+            echo $msg >> $logfile
         fi
     fi
 }
+
 
 # Source helper scripts.
 source $DIR/orca_cmdline.sh
@@ -123,6 +130,9 @@ if [[ $# -eq 0 ]]; then
     echo "For Usage, execute:  `basename $0` -h"
     echo "..."
     exit 1
+elif [[ $1 = '-h' ]]; then
+    echo "BRD. Here"
+    show_help
 fi
 
 readonly COMMANDLINE="$*"
@@ -146,23 +156,11 @@ operation=$1
 validate_operation_type $service_type $operation
 shift
 
-## Get operation.
-#case $1 in
-#    create-bucket)
-#        echo "Create bucket"
-#        operation="create-bucket"
-#        shift
-#        ;;
-#    create-user)
-#        echo "Create User"
-#        operation="create-user"
-#        shift
-#        ;;
-#esac
 
 
+CMD_OPTIONS="a:b:dh"
 
-while getopts "a:b:dh" option; do
+while getopts ${CMD_OPTIONS} option; do
     case $option in
         h)
             show_help 
@@ -181,6 +179,16 @@ while getopts "a:b:dh" option; do
     esac
 done
 
+# Log msg
+curr_debug=$debug
+debug=true
+debug "[ START: $(date +%D:%H:%M:%S) ] -------------------"
+debug "[ Service: $service_type| Operation: $operation ]"
+debug "[ OPTIONS: Account: $account| Bucket Name: $bucketname ]"
+debug " ---------------------------------"
+debug=$curr_debug
+
+
 if [[ $operation = "create-bucket" ]]; then
     validate_input
     s3_create_bucket $bucketname $account
@@ -194,5 +202,11 @@ elif [[ $operation = "create-user" ]]; then
     #create_access_key
     #create_login_credentials
 fi
+
+#Log End msg.
+curr_debug=$debug
+debug=true
+debug "--------------------------------- [ END ]"
+debug " "
 
 
