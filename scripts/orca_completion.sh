@@ -5,6 +5,10 @@ services="ec2 iam s3"
 operations['s3']="create-bucket delete-bucket list-buckets"
 operations['iam']="create-user delete-user list-policies"
 
+s3_operations="create-bucket delete-bucket list-buckets"
+iam_operations="create-user delete-user list-policies"
+
+
 service_type=
 
 function find_options()
@@ -25,7 +29,11 @@ function find_options()
         do
             if [[ $service = $lastoption ]]; then
                 # Matched a service.
-                COMPREPLY=($operations[$service])
+                if [[ $service = "s3" ]]; then
+                    COMPREPLY=($s3_operations)
+                elif [[ $service = "iam" ]]; then
+                    COMPREPLY=($iam_operations)
+                fi
                 service_match=true
                 service_type=$service
             fi
@@ -43,8 +51,13 @@ function find_options()
         fi
     elif [[ $stage = 3 ]]; then
         # Stage 3. We are at service level operations.
-        operationarr=($operations[$service_type])
         operation_match=false
+        if [[ $service_type = "s3" ]]; then
+            operationarr=($s3_operations)
+        elif [[ $service_type = "iam" ]]; then
+            operationarr=($iam_operations)
+        fi
+
         for operation in "${operationarr[@]}"
         do
           if [[ $operation = $lastoption ]]; then
