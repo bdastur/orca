@@ -37,7 +37,7 @@ ORCA_LOGFILE="/tmp/orcalog"
 ####################################################
 function show_help() 
 {
-    echo "`basename $0`  : ORCA - S3 Bucket Operations"
+    echo "`basename $0`  : ORCA - Operations"
     echo "-------------------------------------------------"
     echo "usage: aws_add_user_operation -a account-name -u username [-g groupname] [-p policy1,policy2...] "
     echo ""
@@ -73,7 +73,7 @@ source $DIR/orca_cmdline.sh
 source $DIR/aws_common_utils.sh
 
 
-function validate_input()
+function deprecated_validate_input()
 {
     local account_valid=false
 
@@ -188,7 +188,7 @@ debug=$curr_debug
 
 
 if [[ $operation = "create-bucket" ]]; then
-    validate_input
+    validate_user_input $service_type $operation 
     s3_create_bucket $bucketname $account
     create_s3_access_managed_policy $account $bucketname 'Allow'
 elif [[ $operation = "list-summary" ]]; then

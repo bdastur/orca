@@ -35,6 +35,86 @@ function exit_log()
     exit 1
 }
 
+function validate_account_info()
+{
+    ##############################################
+    # Validate account information.
+    ##############################################
+    # Credinfo is an array of the groups.
+    credinfo=($(cat ~/.aws/credentials | grep '^\['))
+    for profile in "${credinfo[@]}"
+    do
+        profile=${profile#*[}
+        profile=${profile%*]}
+        if [[ $account == $profile ]]; then
+            account_valid=true
+        fi
+    done
+        
+    debug -n "Validating account.. "
+    # Check if the account valid flag is set.
+    if [[ $account_valid == true ]]; then
+        debug ": Account is valid."
+    else
+        echo "Error: Invalid Account provided \"$account\""
+        echo "Valid values are: ${credinfo[@]}"
+        exit_log
+    fi
+}
+
+function validate_bucket()
+{
+    local bucketname=$1
+    debug "Validating bucket ${bucketname}"
+
+    # Validate if bucket exists.
+    buckets=($(aws s3api list-buckets --profile ${account} | awk -F " " '{print $3}'))
+
+    for bucket in "${buckets[@]}"
+    do
+        if [[ $bucket = $bucketname ]]; then
+            echo "Error: Bucket with name $bucketname already exists"
+            exit_log
+        fi 
+    done
+}
+
+####################################################
+# Common validations:
+# The function is invoked before all operations to
+# ensure that user parameters are validated.
+####################################################
+function validate_user_input()
+{
+    service_type=$1
+    operation=$2
+
+    if [[ (-z $service_type) || ( -z $operation ) ]]; then
+        echo "Error: Validation requires service_type and operation set"
+        exit_log
+    fi
+
+    if [[ $service_type = "s3" ]]; then
+        # S3 Service validations.
+        if [[ $operation = "create-bucket" ]]; then
+            if [[ ( -z $account ) || ( -z $bucketname ) ]]; then
+                echo "Error: Required Arguments -b <bucketname> and -a <account> not provided."
+                echo "For Usage, execute:  `basename $0` -h"
+                echo ""
+                exit_log
+            fi  
+            validate_account_info
+            validate_bucket $bucketname
+
+        fi
+    elif [[ $service_type = "iam" ]]; then
+        echo "$service_type"
+    fi
+
+
+
+}
+
 ###################################################
 # IAM Operations.
 ###################################################
