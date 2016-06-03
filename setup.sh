@@ -7,7 +7,7 @@ echo $curdir
 cmdline_completion="$curdir/scripts/orca_completion.sh"
 
 pythonpath=$curdir
-export PYTHONPATH=${pythonpath}
+export PYTHONPATH=${PYTHONPATH}:${pythonpath}
 
 # Source the orca cmdline completion script
 source ${cmdline_completion}
