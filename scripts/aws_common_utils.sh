@@ -50,7 +50,7 @@ function validate_account_info()
             account_valid=true
         fi
     done
-        
+
     debug -n "Validating account.. "
     # Check if the account valid flag is set.
     if [[ $account_valid == true ]]; then
@@ -60,6 +60,59 @@ function validate_account_info()
         echo "Valid values are: ${credinfo[@]}"
         exit_log
     fi
+}
+
+function validate_groupname()
+{
+    local groupname=$1
+
+    if [[ -z $groupname ]]; then
+        echo "NO group. skip validation"
+        return
+    fi
+
+    # Validate groupname.
+    debug -n "Validating Groupname.. "
+    aws_group=$(aws iam list-groups --profile $account | grep $groupname)
+    if [[ -z $aws_group ]]; then
+        echo "Error: Invalid Group provided \"$groupname\""
+        exit_log
+    else
+        debug ": Group Valid: \"$groupname\""
+    fi
+}
+
+function validate_policies()
+{
+    local policy=$1
+
+    if [[ -z $policy ]]; then
+        echo "No policies specified. return"
+        return
+    fi
+
+    # Check Policies.
+    debug "Validating Policies.. "
+    if [[ $delimiter == true ]]; then
+        OFS=$IFS
+        IFS=":"
+    fi
+    policyarr=($policies)
+    for policy in "${policyarr[@]}"
+    do
+        aws_policy=$(aws iam list-policies --profile ${account} | grep $policy)
+        if [[ -z $aws_policy ]]; then
+            echo "Error: Invalid Policy provided \"$policy\""
+            exit_log
+        fi
+        debug ": \"$policy\" Valid "
+    done
+
+    if [[ $delimiter == true ]]; then
+        IFS=$OFS
+    fi
+    debug ": All policies Valid"
+
 }
 
 function validate_bucket()
@@ -75,7 +128,7 @@ function validate_bucket()
         if [[ $bucket = $bucketname ]]; then
             echo "Error: Bucket with name $bucketname already exists"
             exit_log
-        fi 
+        fi
     done
 }
 
@@ -102,16 +155,25 @@ function validate_user_input()
                 echo "For Usage, execute:  `basename $0` -h"
                 echo ""
                 exit_log
-            fi  
+            fi
             validate_account_info
             validate_bucket $bucketname
-
         fi
     elif [[ $service_type = "iam" ]]; then
         echo "$service_type"
+        if [[ $operation = "create-user" ]]; then
+            if [[ ( -z $account ) || ( -z $user ) ]]; then
+                echo "Error: Required Arguments -u <username> and -a <account> not provided."
+                echo "For Usage, execute:  `basename $0` -h"
+                echo ""
+                exit_log
+            fi
+            validate_account_info
+            validate_groupname $group
+            validate_policies $policy
+        fi
     fi
-
-
+    debug "Validations complete.."
 
 }
 
@@ -122,10 +184,12 @@ function validate_user_input()
 
 function create_user()
 {
-    tmpfile="/tmp/ucreate.tmp"
+    local account=$1
+    local user=$2
+    local tmpfile="/tmp/ucreate.tmp"
 
     python - << END
-import boto3 
+import boto3
 import botocore
 
 
@@ -151,10 +215,18 @@ END
 
 function add_user_to_group()
 {
-    tmpfile="/tmp/gadderr.tmp"
+    local account=$1
+    local user=$2
+    local group=$3
+    local tmpfile="/tmp/gadderr.tmp"
+
+    if [[ -z $group ]]; then
+        debug "No group specified to add user to"
+        return
+    fi
 
     python - << END
-import boto3 
+import boto3
 import botocore
 
 
@@ -181,6 +253,10 @@ END
 
 function attach_user_policies()
 {
+    local account=$1
+    local user=$2
+    local policies=$3
+
     if [[ -z $policies ]]; then
         echo "No User policies to attach."
         return
@@ -199,7 +275,7 @@ function attach_user_policies()
         policy_arn=$(aws iam list-policies --profile $account | grep $policy | awk -F" " '{print $2}')
 
     python - << END
-import boto3 
+import boto3
 import botocore
 
 session = boto3.Session(profile_name="${account}")
@@ -229,8 +305,12 @@ END
 
 function create_access_key()
 {
+    local account=$1
+    local user=$2
+    local optional_flag=$3
+
     accesskey_loc="/tmp/${user}_accesskey"
-    if [[ $create_accesskey == true ]]; then
+    if [[ $optional_flag = true ]]; then
         accesskey=$(aws iam create-access-key --user-name  $user --profile $account --output json)
         echo $accesskey >  $accesskey_loc
     fi
@@ -238,10 +318,17 @@ function create_access_key()
 
 function create_login_credentials()
 {
+    local account=$1
+    local user=$2
+    local optional_flag=$3
+    local tmpfile="/tmp/loginprofilerr.tmp"
 
-   tmpfile="/tmp/loginprofilerr.tmp"
-
-   if [[ $create_logincredentials == true ]]; then
+   if [[ $optional_flag == true ]]; then
+       if [[ ! -z $force_password ]]; then
+           password_flag="True"
+       else
+           password_flag="False"
+       fi
 
     python - << END
 import random
@@ -252,14 +339,23 @@ import botocore
 
 size = 10
 chars = string.digits + string.ascii_letters + "[{}]"
-user_password = ''.join(random.choice(chars) for _ in range(size))
-user_password = user_password + "{"
+
+if "$password_flag" == "True":
+    user_password = "$force_password"
+    reset_required = False
+else:
+    user_password = ''.join(random.choice(chars) for _ in range(size))
+    user_password = user_password + "{"
+    reset_required = True
+
 logincreds_file = "/tmp/$user" + "_logincredentials"
 
 session = boto3.Session(profile_name="${account}")
 iamclient = session.client('iam')
 try:
-    login_profile = iamclient.create_login_profile(UserName="$user", Password=user_password, PasswordResetRequired=True)
+    login_profile = iamclient.create_login_profile(UserName="$user",
+                                                   Password=user_password,
+                                                   PasswordResetRequired=reset_required)
     fp = open(logincreds_file, "w")
     fp.write(str(login_profile))
     fp.close()
@@ -276,8 +372,8 @@ END
            exit_log
        else
            debug "Login profile for $user created"
-       fi 
-   fi 
+       fi
+   fi
 }
 
 #################################
@@ -296,7 +392,7 @@ function create_policy_statement()
 import json
 import sys
 
-#statement = [] 
+#statement = []
 statementobj = {}
 
 statementobj['Resource'] = []
@@ -305,7 +401,7 @@ resources = "${resources}".split()
 for resource in resources:
     resource_arn = resource
     if "${resource_type}".lower() == 's3':
-        resource_arn = "arn:aws:s3:::" + resource 
+        resource_arn = "arn:aws:s3:::" + resource
 
     statementobj['Resource'].append(resource_arn)
 
