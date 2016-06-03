@@ -4,7 +4,7 @@
 # ORCA CLI Handler:
 # ----------------
 # orcacli: Is a command line management utility to manage
-# AWS cloud. 
+# AWS cloud.
 #
 # Where AWS CLI provides a very useful and exhaustive CLI
 # to perform various operations, orca CLI provides an encompassing
@@ -26,16 +26,23 @@ account=
 bucketname=
 operation=
 debug=false
+group=
+user=
+create_accesskey=false
+create_logincredentials=false
+delimiter=false
+force_password=
+
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
 
 ####################################################
-# show_help: 
+# show_help:
 # Display the help for this tool.
 # @Arguments: None
 ####################################################
-function show_help() 
+function show_help()
 {
     echo "`basename $0`  : ORCA - Operations"
     echo "-------------------------------------------------"
@@ -49,7 +56,7 @@ function show_help()
     echo ""
     echo "-f password  : [OPTIONAL] Instead of randomly generated password. Force the password from CLI"
     echo ""
-    echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified" 
+    echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
     echo ""
     echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
     echo ""
@@ -116,7 +123,7 @@ function deprecated_validate_input()
         if [[ $bucket = $bucketname ]]; then
             echo "Bucket with name $bucketname already exists"
             exit_log
-        fi 
+        fi
     done
 
     echo "Validations.. Complete"
@@ -154,22 +161,47 @@ operation=$1
 validate_operation_type $service_type $operation
 shift
 
+if [[ $service_type = "s3" ]]; then
+    CMD_OPTIONS="a:b:dh"
+elif [[ $service_type = "iam" ]]; then
+    CMD_OPTIONS="a:cdf:g:lp:ru:h"
+fi
 
-CMD_OPTIONS="a:b:dh"
 
 while getopts ${CMD_OPTIONS} option; do
     case $option in
         h)
-            show_help 
+            show_help
             ;;
-        a) 
+        a)
             account=$OPTARG
             ;;
         b)
             bucketname=$OPTARG
             ;;
-        d) 
+        c)
+            create_accesskey=true
+            ;;
+        d)
             debug=true
+            ;;
+        f)
+            force_password=$OPTARG
+            ;;
+        g)
+            group=$OPTARG
+            ;;
+        l)
+            create_logincredentials=true
+            ;;
+        p)
+            policies=$OPTARG
+            ;;
+        r)
+            delimiter=true
+            ;;
+        u)
+            user=$OPTARG
             ;;
         :) echo "Error: option \"-$OPTARG\" needs argument"; echo "error :";;
         *) echo "Error: Invalid option \"-$OPTARG\""; echo "invalid option error";;
@@ -188,19 +220,18 @@ debug=$curr_debug
 
 
 if [[ $operation = "create-bucket" ]]; then
-    validate_user_input $service_type $operation 
+    validate_user_input $service_type $operation
     s3_create_bucket $bucketname $account
     create_s3_access_managed_policy $account $bucketname 'Allow'
 elif [[ $operation = "list-summary" ]]; then
     s3_list_summary
 elif [[ $operation = "create-user" ]]; then
-    echo "Operation: $operation... NotImplemented"
-    #validate_input
-    #create_user
-    #add_user_to_group
-    #attach_user_policies
-    #create_access_key
-    #create_login_credentials
+    validate_user_input $service_type $operation
+    create_user $account $user
+    add_user_to_group $account $user $group
+    attach_user_policies $account $user $policies
+    create_access_key $account $user $create_accesskey
+    create_login_credentials $account $user $create_logincredentials
 fi
 
 #Log End msg.
