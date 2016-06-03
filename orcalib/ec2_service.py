@@ -66,17 +66,9 @@ class AwsServiceEC2(object):
 
                 vms = self.clients[profile][region].describe_instances()
                 for vm in vms['Reservations']:
-                    vm['profile_name'] = []
-                    vm_present = False
-                    for savedvm in vm_list:
-                        if vm['ReservationId'] == savedvm['ReservationId']:
-                            savedvm['profile_name'].append(profile)
-                            vm_present = True
-                            break
-                    if vm_present is False:
-                        vm['region'] = region
-                        vm['profile_name'].append(profile)
-                        vm_list.append(vm)
+                    vm['region'] = region
+                    vm['profile_name'] = profile
+                    vm_list.append(vm)
 
         return vm_list
 
