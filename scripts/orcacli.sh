@@ -79,54 +79,29 @@ function show_help()
 source $DIR/orca_cmdline.sh
 source $DIR/aws_common_utils.sh
 
-
-function deprecated_validate_input()
+# Create S3 Bucket.
+function create_bucket() 
 {
-    local account_valid=false
-
-    if [[ ( -z $account ) || ( -z $bucketname ) ]]; then
-        echo "Error: Required Arguments -b <bucketname> and -a <account> not provided."
-        echo "For Usage, execute:  `basename $0` -h"
-        echo ""
-        exit_log
+    validate_user_input $service_type $operation
+    s3_create_bucket $bucketname $account
+    s3policyname=$(create_policy_name 's3' $bucketname)
+    create_s3_access_managed_policy $account $bucketname 'Allow' $s3policyname
+    if [[ ! -z $group ]]; then
+        attach_group_policies $account $group $s3policyname
+    elif [[ ! -z $user ]]; then
+        attach_user_policies $account $user $s3policyname
     fi
+}
 
-    ##############################################
-    # Validate account information.
-    ##############################################
-    # Credinfo is an array of the groups.
-    credinfo=($(cat ~/.aws/credentials | grep '^\['))
-    for profile in "${credinfo[@]}"
-    do
-        profile=${profile#*[}
-        profile=${profile%*]}
-        if [[ $account == $profile ]]; then
-            account_valid=true
-        fi
-    done
-
-    debug -n "Validating account.. "
-    # Check if the account valid flag is set.
-    if [[ $account_valid == true ]]; then
-        debug ": Account is valid."
-    else
-        echo "Error: Invalid Account provided \"$account\""
-        echo "Valid values are: ${credinfo[@]}"
-        exit_log
-    fi
-
-    # Validate if bucket exists.
-    buckets=($(aws s3api list-buckets --profile ${account} | awk -F " " '{print $3}'))
-
-    for bucket in "${buckets[@]}"
-    do
-        if [[ $bucket = $bucketname ]]; then
-            echo "Bucket with name $bucketname already exists"
-            exit_log
-        fi
-    done
-
-    echo "Validations.. Complete"
+# Create User.
+function create_user_account()
+{
+    validate_user_input $service_type $operation
+    create_user $account $user
+    add_user_to_group $account $user $group
+    attach_user_policies $account $user $policies
+    create_access_key $account $user $create_accesskey
+    create_login_credentials $account $user $create_logincredentials
 }
 
 
@@ -162,7 +137,7 @@ validate_operation_type $service_type $operation
 shift
 
 if [[ $service_type = "s3" ]]; then
-    CMD_OPTIONS="a:b:dh"
+    CMD_OPTIONS="a:b:dg:u:h"
 elif [[ $service_type = "iam" ]]; then
     CMD_OPTIONS="a:cdf:g:lp:ru:h"
 fi
@@ -220,18 +195,11 @@ debug=$curr_debug
 
 
 if [[ $operation = "create-bucket" ]]; then
-    validate_user_input $service_type $operation
-    s3_create_bucket $bucketname $account
-    create_s3_access_managed_policy $account $bucketname 'Allow'
+    create_bucket
 elif [[ $operation = "list-summary" ]]; then
     s3_list_summary
 elif [[ $operation = "create-user" ]]; then
-    validate_user_input $service_type $operation
-    create_user $account $user
-    add_user_to_group $account $user $group
-    attach_user_policies $account $user $policies
-    create_access_key $account $user $create_accesskey
-    create_login_credentials $account $user $create_logincredentials
+    create_user_account
 fi
 
 #Log End msg.
