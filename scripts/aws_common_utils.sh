@@ -84,9 +84,9 @@ function validate_groupname()
 
 function validate_policies()
 {
-    local policy=$1
+    local policies=$1
 
-    if [[ -z $policy ]]; then
+    if [[ -z $policies ]]; then
         echo "No policies specified. return"
         return
     fi
@@ -160,7 +160,6 @@ function validate_user_input()
             validate_bucket $bucketname
         fi
     elif [[ $service_type = "iam" ]]; then
-        echo "$service_type"
         if [[ $operation = "create-user" ]]; then
             if [[ ( -z $account ) || ( -z $user ) ]]; then
                 echo "Error: Required Arguments -u <username> and -a <account> not provided."
@@ -173,6 +172,7 @@ function validate_user_input()
             validate_policies $policy
         fi
     fi
+
     debug "Validations complete.."
 
 }
@@ -186,7 +186,7 @@ function create_user()
 {
     local account=$1
     local user=$2
-    local tmpfile="/tmp/ucreate.tmp"
+    local tmpfile="/tmp/orcaucreate-$(date +%s)"
 
     python - << END
 import boto3
@@ -218,7 +218,7 @@ function add_user_to_group()
     local account=$1
     local user=$2
     local group=$3
-    local tmpfile="/tmp/gadderr.tmp"
+    local tmpfile="/tmp/orcagadderr-$(date +%s)"
 
     if [[ -z $group ]]; then
         debug "No group specified to add user to"
@@ -248,6 +248,57 @@ END
     else
         debug "User $user added to group $group"
     fi
+}
+
+function attach_group_policies()
+{
+    local account=$1
+    local group=$2
+    local policies=$3
+    local tmpfile="/tmp/orcaattachpolicyerr-$(date +%s)"
+
+    if [[ -z $policies ]]; then
+        echo "No group policies to attach"
+        return
+    fi
+
+    if [[ $delimiter == true ]]; then
+        OFS=$IFS
+        IFS=":"
+    fi
+
+    policyarr=($policies)
+    for policy in "${policyarr[@]}"
+    do
+        policy_arn=$(aws iam list-policies --profile $account | grep $policy | awk -F" " '{print $2}')
+        echo "Policy arn: $policy_arn"
+
+    python - << END
+import boto3
+import botocore
+
+session = boto3.Session(profile_name="${account}")
+iamclient = session.client('iam')
+try:
+    iamclient.attach_group_policy(GroupName="$group", PolicyArn="$policy_arn")
+except botocore.exceptions.ClientError as boto_exception:
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+
+END
+    done
+
+    if [[ $delimiter = true ]]; then
+        IFS=$OFS
+    fi
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to attach policies to $group"
+        rm $tmpfile
+        exit_log
+    else
+        debug "Policies $policies attached to Group $group"
+    fi
 
 }
 
@@ -262,7 +313,7 @@ function attach_user_policies()
         return
     fi
 
-    tmpfile="/tmp/attachpolicyerr.tmp"
+    tmpfile="/tmp/orcaattachpolicyerr-$(date +%s)"
 
     if [[ $delimiter == true ]]; then
         OFS=$IFS
@@ -273,7 +324,6 @@ function attach_user_policies()
     for policy in "${policyarr[@]}"
     do
         policy_arn=$(aws iam list-policies --profile $account | grep $policy | awk -F" " '{print $2}')
-
     python - << END
 import boto3
 import botocore
@@ -321,7 +371,7 @@ function create_login_credentials()
     local account=$1
     local user=$2
     local optional_flag=$3
-    local tmpfile="/tmp/loginprofilerr.tmp"
+    local tmpfile="/tmp/orcaloginprofilerr-$(date +%s)"
 
    if [[ $optional_flag == true ]]; then
        if [[ ! -z $force_password ]]; then
@@ -386,7 +436,7 @@ function create_policy_statement()
     local resources=$2
     local effect=$3
     local actions=$4
-    local tmpfile="/tmp/policystmt-$(date +%s)"
+    local tmpfile="/tmp/orcapolicystmt-$(date +%s)"
 
     python - << END
 import json
@@ -440,7 +490,7 @@ function create_policy_file()
     local resources=$2
     local effect=$3
     local actions=$4
-    tmpfile="/tmp/iampolicy_$(date +%s)"
+    tmpfile="/tmp/orcaiampolicy_$(date +%s)"
 
     policy_stmt=$(create_policy_statement "$resource_type" "$resources" "$effect" "$actions")
 
@@ -465,6 +515,14 @@ END
 
 }
 
+function create_policy_name()
+{
+    local prefix=$1
+    local name=$2
+
+    policy_name="$prefix-${name}-AccessPolicy"
+    echo $policy_name
+}
 
 function create_s3_access_managed_policy()
 {
@@ -472,6 +530,7 @@ function create_s3_access_managed_policy()
     local account_name=$1
     local bucketname=$2
     local effect=$3
+    local policy_name=$4
 
     local resource_type='s3'
     local resources="$bucketname ${bucketname}/*"
@@ -479,12 +538,12 @@ function create_s3_access_managed_policy()
 
     policy_file=$(create_policy_file "$resource_type" "$resources" "$effect" "$actions")
 
-    echo "Policy file: $policy_file"
-    cat $policy_file
-    policy_name="$resource_type-${bucketname}-AccessPolicy"
-    echo "Policy name: $policy_name"
+    debug "Policy file: $policy_file"
 
     aws iam create-policy --policy-name ${policy_name} --policy-document file://${policy_file} --profile ${account_name}
+
+    # Cleanup the policy file
+    rm ${policy_file}
 
 }
 
@@ -498,7 +557,7 @@ function s3_create_bucket()
     local bucketname=$1
     local account_name=$2
 
-    tmpfile="/tmp/s3bucketcreate_err.tmp"
+    tmpfile="/tmp/orcas3bucketcreate_err-$(date +%s)"
 
     # Use Python boto3 API to create bucket.
     # Reason for this is aws cli does not return a correct
