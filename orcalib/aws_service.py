@@ -7,7 +7,8 @@
 from orcalib.s3_service import AwsServiceS3
 from orcalib.ec2_service import AwsServiceEC2
 from orcalib.iam_service import AwsServiceIAM
-
+from orcalib.cloudwatch_service import AwsServiceCloudWatch
+from orcalib.autoscaling_service import AwsServiceAutoScaling
 
 class AwsService(object):
     '''
@@ -55,6 +56,14 @@ class AwsService(object):
                                          secret_access_key=secret_access_key)
         elif service == "iam":
             self.service = AwsServiceIAM(profile_names=profile_names,
+                                         access_key_id=access_key_id,
+                                         secret_access_key=secret_access_key)
+        elif service == "cloudwatch":
+            self.service = AwsServiceCloudWatch(profile_names=profile_names,
+                                         access_key_id=access_key_id,
+                                         secret_access_key=secret_access_key)
+        elif service == "autoscaling":
+            self.service = AwsServiceAutoScaling(profile_names=profile_names,
                                          access_key_id=access_key_id,
                                          secret_access_key=secret_access_key)
 
