@@ -23,6 +23,7 @@ class AwsServiceAutoScaling(object):
         orca_config = OrcaConfig()
         self.regions = orca_config.get_regions()
         self.clients = {}
+        self.auto_scaling_groups = {}
 
         if profile_names is not None:
             for profile_name in profile_names:
@@ -55,6 +56,38 @@ class AwsServiceAutoScaling(object):
         '''
         group_list = []
         for profile in self.clients.keys():
+            self.auto_scaling_groups[profile] = {}
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                self.auto_scaling_groups[profile][region] = []
+                if regions is not None and \
+                        region not in regions:
+                    continue
+
+                groups = self.clients[profile][region].\
+                    describe_auto_scaling_groups()
+                for group in groups['AutoScalingGroups']:
+                    print group['AutoScalingGroupName']
+                    self.auto_scaling_groups[profile][region].append(group[
+                        'AutoScalingGroupName'])
+                    group['region'] = region
+                    group['profile_name'] = profile
+                    group_list.append(group)
+
+        return group_list
+
+    def list_launch_configurations(self, profile_names=None, regions=None):
+        '''
+        Return all the launch configurations.
+
+        :type profile_names: List of Strings
+        :param profile_names: List of profiles.
+
+        '''
+        group_list = []
+        for profile in self.clients.keys():
             if profile_names is not None and \
                     profile not in profile_names:
                 continue
@@ -64,10 +97,44 @@ class AwsServiceAutoScaling(object):
                     continue
 
                 groups = self.clients[profile][region].\
-                    describe_auto_scaling_groups()
-                for group in groups['AutoScalingGroups']:
+                    describe_launch_configurations()
+                for group in groups['LaunchConfigurations']:
                     group['region'] = region
                     group['profile_name'] = profile
                     group_list.append(group)
 
         return group_list
+
+    def list_load_balancers(self, profile_names=None, regions=None):
+        '''
+        Return all the load balancers.
+
+        :type profile_names: List of Strings
+        :param profile_names: List of profiles.
+
+        '''
+        group_list = []
+        if not self.auto_scaling_groups:
+            self.list_autoscaling_groups()
+        if not self.auto_scaling_groups:
+            print "Didnt find auto scaling groups names, cant list load bal."
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+                if self.auto_scaling_groups[profile] and \
+                        self.auto_scaling_groups[profile][region]:
+                    for name in self.auto_scaling_groups[profile][region]:
+                        groups = self.clients[profile][region].\
+                    describe_load_balancers(AutoScalingGroupName=name)
+                    for group in groups['LoadBalancers']:
+                        group['region'] = region
+                        group['profile_name'] = profile
+                        group_list.append(group)
+
+        return group_list
+

@@ -127,6 +127,33 @@ class AwsServiceEC2(object):
 
         return nw_list
 
+    def list_images(self, profile_names=None, regions=None):
+
+        '''
+
+        :param profile_names: List of Strings
+        :param regions: List of profiles
+        :return:
+        '''
+
+        image_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+                images = self.clients[profile][region].\
+                    describe_images()
+                for image in images['Images']:
+                    image['region'] = region
+                    image['profile_name'] = profile
+                    image_list.append(image)
+
+        return image_list
+
 
 
 
