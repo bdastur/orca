@@ -47,7 +47,7 @@ class AwsServiceEC2(object):
 
     def list_vms(self, profile_names=None, regions=None):
         '''
-        Return all the buckets.
+        Return all the vms.
 
         :type profile_names: List of Strings
         :param profile_names: List of profiles. If Not set then get list
@@ -71,6 +71,88 @@ class AwsServiceEC2(object):
                     vm_list.append(vm)
 
         return vm_list
+
+    def list_reserved_vms(self, profile_names=None, regions=None):
+        '''
+        Return reserved vms.
+
+        :type profile_names: List of Strings
+        :param profile_names: List of profiles. If Not set then get list
+            of reserved vms from all profiles/environments.
+
+        '''
+        vm_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+
+                vms = self.clients[profile][region].\
+                    describe_reserved_instances()
+                for vm in vms['ReservedInstances']:
+                    vm['region'] = region
+                    vm['profile_name'] = profile
+                    vm_list.append(vm)
+
+        return vm_list
+
+    def list_network_interfaces(self, profile_names=None, regions=None):
+
+        '''
+
+        :param profile_names: List of Strings
+        :param regions: List of profiles
+        :return:
+        '''
+
+        nw_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+                nws = self.clients[profile][region].\
+                    describe_network_interfaces()
+                for nw in nws['NetworkInterfaces']:
+                    nw['region'] = region
+                    nw['profile_name'] = profile
+                    nw_list.append(nw)
+
+        return nw_list
+
+    def list_images(self, profile_names=None, regions=None):
+
+        '''
+
+        :param profile_names: List of Strings
+        :param regions: List of profiles
+        :return:
+        '''
+
+        image_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and \
+                    profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and \
+                        region not in regions:
+                    continue
+                images = self.clients[profile][region].\
+                    describe_images()
+                for image in images['Images']:
+                    image['region'] = region
+                    image['profile_name'] = profile
+                    image_list.append(image)
+
+        return image_list
 
 
 
