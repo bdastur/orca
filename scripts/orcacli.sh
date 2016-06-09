@@ -37,6 +37,89 @@ force_password=
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
 
+
+#############
+# Help Generic
+##############
+function show_help_generic()
+{
+    echo "`basename $0`  : ORCA - Operations"
+    echo "-------------------------------------------------"
+    echo "usage: orcacli <service type> <operation type> [ OPTIONS ]"
+    echo "Services: "
+    echo ""
+    servicearr=($services)
+    for service in "${servicearr[@]}"
+    do
+        echo "${service}"
+    done
+
+    exit 1
+}
+
+function show_help_service()
+{
+    local service=$1
+    local service_options=($2)
+    local optcount=${#service_options}
+
+    if [[ $service = "s3" ]]; then
+        operations=($s3_operations)
+    elif [[ $service = "iam" ]]; then
+        operations=($iam_operations)
+    fi
+
+    echo "Available Operations:"
+    echo "----------------------"
+    for operation in "${operations[@]}"
+    do
+        echo "${operation}"
+    done
+
+    echo "Options:"
+    echo "-------------"
+
+    for (( i=0; i<$optcount; i++ )); do
+        option=${service_options:$i:1}
+        case $option in
+            a)
+                echo "-a account   : Specifiy the account name where the new user should be created."
+                ;;
+            b)
+                echo "-b bucket    : Specify the bucket name to create."
+                ;;
+            c)
+                echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
+                ;;
+            d)
+                echo "-a account   : Specifiy the account name where the new user should be created."
+                ;;
+            f)
+                echo "-f password  : [OPTIONAL] Instead of randomly generated password. Force the password from CLI"
+                ;;
+            g)
+                echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
+                ;;
+            l)
+                echo "-l login profile: [OPTIONAL] If specified create a login profile with a login password"
+                ;;
+            p)
+                echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
+                ;; 
+            r)
+                echo "-r delimiter: [OPTIONAL] This flag is set when list arguments like policies are passed with delimiter \":\""
+                ;;
+            u)
+                echo "-u username  : Specify a username" 
+                ;;
+            :) ;;
+            *);;
+        esac
+    done
+
+    exit 1
+}
+
 ####################################################
 # show_help:
 # Display the help for this tool.
@@ -111,8 +194,7 @@ if [[ $# -eq 0 ]]; then
     echo "..."
     exit 1
 elif [[ $1 = '-h' ]]; then
-    echo "BRD. Here"
-    show_help
+    show_help_generic
 fi
 
 readonly COMMANDLINE="$*"
@@ -126,14 +208,7 @@ readonly COMMANDLINE="$*"
 
 # Get service type.
 service_type=$1
-echo "Service type: $service_type"
 validate_service_type $service_type
-shift
-
-echo "options: $*"
-
-operation=$1
-validate_operation_type $service_type $operation
 shift
 
 if [[ $service_type = "s3" ]]; then
@@ -141,6 +216,17 @@ if [[ $service_type = "s3" ]]; then
 elif [[ $service_type = "iam" ]]; then
     CMD_OPTIONS="a:cdf:g:lp:ru:h"
 fi
+
+
+if [[ $1 = '-h' ]]; then
+    echo "Help for service"
+    show_help_service $service_type $CMD_OPTIONS
+fi
+
+
+operation=$1
+validate_operation_type $service_type $operation
+shift
 
 
 while getopts ${CMD_OPTIONS} option; do
