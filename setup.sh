@@ -12,4 +12,4 @@ export PYTHONPATH=${PYTHONPATH}:${pythonpath}
 # Source the orca cmdline completion script
 source ${cmdline_completion}
 
-alias orcacli.sh="$DIR/scripts/orcacli.sh"
+alias orcacli="$DIR/orcacli.sh"
