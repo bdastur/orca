@@ -42,8 +42,7 @@ class AwsServiceEC2(object):
                 self.clients[profile] = {}
                 for region in self.regions:
                     self.clients[profile][region] = \
-                        session.client(service,
-                                       region_name=region)
+                        session.client(service, region_name=region)
 
     def list_vms(self, profile_names=None, regions=None):
         '''
@@ -154,8 +153,75 @@ class AwsServiceEC2(object):
 
         return image_list
 
+    def list_volumes(self, profile_names=None, regions=None):
+        vol_list = []
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
 
+                vols = self.clients[profile][region].describe_volumes()
 
+                for vol in vols['Volumes']:
+                    vol['region'] = region
+                    vol['profile_name'] = profile
+                    vol_list.append(vol)
 
+        return vol_list
 
+    def list_snapshots(self, profile_names=None, regions=None):
+        snapshots = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
 
+                snaps = self.clients[profile][region].describe_snapshots()
+
+                for s in snaps['Snapshots']:
+                    s['region'] = region
+                    s['profile_name'] = profile
+                    snapshots.append(s)
+
+        return snapshots
+
+    def list_security_groups(self, profile_names=None, regions=None):
+        security_groups = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
+
+                client = self.clients[profile][region]
+                groups = client.describe_security_groups()
+
+                for group in groups['SecurityGroups']:
+                    groups['region'] = region
+                    groups['profile_name'] = profile
+                    security_groups.append(group)
+
+        return security_groups
+
+    def list_tags(self, profile_names=None, regions=None):
+        tags = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
+
+                tags_ = self.clients[profile][region].describe_tags()
+
+                for tag in tags_['Tags']:
+                    tag['region'] = region
+                    tag['profile_name'] = profile
+                    tags.append(tag)
+
+        return tags
