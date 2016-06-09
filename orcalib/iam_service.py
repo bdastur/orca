@@ -148,6 +148,12 @@ class AwsServiceIAM(object):
 
         return statements
 
+    def get_user_groups(self,user):
+        profile = user['profile_name']
+        groupdata = self.clients[profile].list_groups_for_user(
+                        UserName=user['UserName'])
+        return groupdata['Groups']
+
 
 
 
