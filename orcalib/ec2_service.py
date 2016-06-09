@@ -188,3 +188,22 @@ class AwsServiceEC2(object):
                     snapshots.append(s)
 
         return snapshots
+
+    def list_security_groups(self, profile_names=None, regions=None):
+        security_groups = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
+
+                client = self.clients[profile][region]
+                groups = client.describe_security_groups()
+
+                for group in groups['SecurityGroups']:
+                    groups['region'] = region
+                    groups['profile_name'] = profile
+                    security_groups.append(group)
+
+        return security_groups
