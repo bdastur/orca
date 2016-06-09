@@ -179,10 +179,11 @@ function create_bucket()
 # Create User.
 function create_user_account()
 {
-    validate_user_input $service_type $operation
+    # Note: pass policies in quotesa ""
+    validate_user_input $service_type $operation "$policies"
     create_user $account $user
     add_user_to_group $account $user $group
-    attach_user_policies $account $user $policies
+    attach_user_policies $account $user "$policies"
     create_access_key $account $user $create_accesskey
     create_login_credentials $account $user $create_logincredentials
 }
