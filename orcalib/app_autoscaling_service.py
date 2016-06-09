@@ -3,7 +3,7 @@ from aws_config import AwsConfig
 from aws_config import OrcaConfig
 
 
-class AwsAppAutoscaling(object):
+class AwsServiceAppAutoscaling(object):
     '''
     The class provides a simpler abstraction to the AWS boto3
     Autoscaling client interface
