@@ -170,3 +170,21 @@ class AwsServiceEC2(object):
                     vol_list.append(vol)
 
         return vol_list
+
+    def list_snapshots(self, profile_names=None, regions=None):
+        snapshots = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
+
+                snaps = self.clients[profile][region].describe_snapshots()
+
+                for s in snaps['Snapshots']:
+                    s['region'] = region
+                    s['profile_name'] = profile
+                    snapshots.append(s)
+
+        return snapshots
