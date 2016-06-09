@@ -207,3 +207,21 @@ class AwsServiceEC2(object):
                     security_groups.append(group)
 
         return security_groups
+
+    def list_tags(self, profile_names=None, regions=None):
+        tags = list()
+        for profile in self.clients.keys():
+            if profile_names is not None and profile not in profile_names:
+                continue
+            for region in self.regions:
+                if regions is not None and region not in regions:
+                    continue
+
+                tags_ = self.clients[profile][region].describe_tags()
+
+                for tag in tags_['Tags']:
+                    tag['region'] = region
+                    tag['profile_name'] = profile
+                    tags.append(tag)
+
+        return tags
