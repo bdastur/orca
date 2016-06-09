@@ -43,6 +43,11 @@ class AwsAppAutoscaling(object):
                         session.client(service, region_name=region)
 
     def list_scaling_policies(self, service, profile_names=None, regions=None):
+        """List Application scaling policies.
+
+        :param service: AWS Service Namespace (ec2, etc.)
+
+        """
         scaling_policies = list()
         for profile in self.clients.keys():
             if profile_names is not None and profile not in profile_names:
