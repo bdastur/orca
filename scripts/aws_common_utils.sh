@@ -410,6 +410,8 @@ try:
                                                    PasswordResetRequired=reset_required)
     fp = open(logincreds_file, "w")
     fp.write(str(login_profile))
+    password_str = "Password: " + user_password
+    fp.write(password_str)
     fp.close()
 except botocore.exceptions.ClientError as boto_exception:
     print "[%s] " % boto_exception
