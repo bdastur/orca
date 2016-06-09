@@ -400,7 +400,7 @@ else:
     user_password = user_password + "{"
     reset_required = True
 
-logincreds_file = "/tmp/$user_$account" + "_logincredentials"
+logincreds_file = "/tmp/$user" + "_" + "$account" + "_logincredentials"
 
 session = boto3.Session(profile_name="${account}")
 iamclient = session.client('iam')
