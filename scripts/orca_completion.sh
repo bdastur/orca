@@ -96,5 +96,5 @@ function _cmdline_complete()
 
 }
 
-complete -F _cmdline_complete orcacli.sh 
+complete -F _cmdline_complete orcacli
 
