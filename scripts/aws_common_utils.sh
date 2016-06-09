@@ -84,10 +84,10 @@ function validate_groupname()
 
 function validate_policies()
 {
-    local policies=$1
+    local policies="$1"
 
     if [[ -z $policies ]]; then
-        echo "No policies specified. return"
+        echo "validate policies: No policies specified. return"
         return
     fi
 
@@ -141,6 +141,7 @@ function validate_user_input()
 {
     service_type=$1
     operation=$2
+    policies="$3"
 
     if [[ (-z $service_type) || ( -z $operation ) ]]; then
         echo "Error: Validation requires service_type and operation set"
@@ -169,7 +170,7 @@ function validate_user_input()
             fi
             validate_account_info
             validate_groupname $group
-            validate_policies $policy
+            validate_policies "$policies"
         fi
     fi
 
@@ -324,6 +325,7 @@ function attach_user_policies()
     for policy in "${policyarr[@]}"
     do
         policy_arn=$(aws iam list-policies --profile $account | grep $policy | awk -F" " '{print $2}')
+        debug "Attach policy $policy_arn to user $user"
     python - << END
 import boto3
 import botocore
@@ -359,7 +361,7 @@ function create_access_key()
     local user=$2
     local optional_flag=$3
 
-    accesskey_loc="/tmp/${user}_accesskey"
+    accesskey_loc="/tmp/${user}_${account}_accesskey"
     if [[ $optional_flag = true ]]; then
         accesskey=$(aws iam create-access-key --user-name  $user --profile $account --output json)
         echo $accesskey >  $accesskey_loc
@@ -398,7 +400,7 @@ else:
     user_password = user_password + "{"
     reset_required = True
 
-logincreds_file = "/tmp/$user" + "_logincredentials"
+logincreds_file = "/tmp/$user_$account" + "_logincredentials"
 
 session = boto3.Session(profile_name="${account}")
 iamclient = session.client('iam')
