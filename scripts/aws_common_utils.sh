@@ -202,6 +202,31 @@ END
 
 }
 
+function iam_list_user_permissions()
+{
+    user=$1
+    outputformat=$2
+
+    if [[ -z $user ]]; then
+        echo "Error: Required username"
+        exit_log 
+    fi
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi
+
+    echo "List User Permissions"
+    python - << END
+from cliclient.iam_commandhelper import IAMCommandHandler
+
+iamcmdhandler = IAMCommandHandler()
+iamcmdhandler.display_iam_user_permissions("${user}", outputformat="${outputformat}")
+
+END
+
+}
+
 
 function create_user()
 {
@@ -634,3 +659,46 @@ END
 
 }
 
+function s3_list_buckets()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi  
+
+    echo "List summary"
+    python - << END
+from cliclient.s3_commandhelper import S3CommandHandler
+
+
+s3cmdhandler = S3CommandHandler()
+s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}")
+
+END
+
+}
+
+###################################################
+# EC2 
+###################################################
+
+function ec2_list_vms()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi
+
+    echo "List summary"
+    python - << END
+from cliclient.ec2_commandhelper import EC2CommandHandler
+
+
+ec2cmdhandler = EC2CommandHandler()
+ec2cmdhandler.display_ec2_vmlist(outputformat="${outputformat}")
+
+END
+
+}
