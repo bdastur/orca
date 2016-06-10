@@ -296,6 +296,8 @@ elif [[ $operation = "list-summary" ]]; then
     s3_list_summary $outputformat
 elif [[ $operation = "list-buckets" ]]; then
     s3_list_buckets $outputformat
+elif [[ $operation = "list-validations" ]]; then
+    s3_list_validations $outputformat
 elif [[ $operation = "create-user" ]]; then
     create_user_account
 elif [[ $operation = "list-users" ]]; then
