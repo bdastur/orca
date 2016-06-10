@@ -182,6 +182,26 @@ function validate_user_input()
 # IAM Operations.
 ###################################################
 
+function iam_list_users()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi  
+
+    echo "List summary"
+    python - << END
+from cliclient.iam_commandhelper import IAMCommandHandler
+
+
+iamcmdhandler = IAMCommandHandler()
+iamcmdhandler.display_iam_userlist(outputformat="${outputformat}")
+
+END
+
+}
+
 
 function create_user()
 {
