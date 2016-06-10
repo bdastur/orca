@@ -57,6 +57,16 @@ class AwsServiceUt(unittest.TestCase):
         for bucket in bucketlist:
             print "Bucket: ", bucket
 
+    def test_populate_bucket_tagging(self):
+        print "Test api populate_bucket_tagging"
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service.clients is not None)
+
+        bucketlist = service_client.service.list_buckets()
+        service_client.service.populate_bucket_tagging(bucketlist)
+        for bucket in bucketlist:
+            print "Bucket: ", bucket
+
     def test_basic_orcaenv(self):
         print "Test handling of the env yaml file"
         service_client = aws_config.OrcaConfig()
