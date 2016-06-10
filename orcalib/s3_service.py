@@ -196,25 +196,28 @@ class AwsServiceS3(object):
         for bucket in bucketlist:
             bucket['validations'] = {}
             bucket_taglist = []
-            if bucket['TagSet'] is None:
-                bucket_tagset = None
+            try:
+                if bucket['TagSet'] is None:
+                    bucket_tagset = None
+                    bucket['validations']['result'] = 'FAIL'
+                    bucket['validations']['tagresult'] = "No Tags Found"
+                else:
+                    for obj in bucket['TagSet']:
+                        bucket_taglist.append(obj['Key'])
+                    bucket_tagset = set(bucket_taglist)
+                    difference = tagset.difference(bucket_tagset)
+                    if len(difference) != 0:
+                        bucket['validations']['tagresult'] = "Tags Missing: " \
+                            + str(difference)
+                        bucket['validations']['result'] = 'FAIL'
+            except KeyError:
                 bucket['validations']['result'] = 'FAIL'
                 bucket['validations']['tagresult'] = "No Tags Found"
-            else:
-                for obj in bucket['TagSet']:
-                    bucket_taglist.append(obj['Key'])
-                bucket_tagset = set(bucket_taglist)
-                difference = tagset.difference(bucket_tagset)
-                if len(difference) != 0:
-                    bucket['validations']['tagresult'] = "Tags Missing: " + \
-                        str(difference)
-                    bucket['validations']['result'] = 'FAIL'
 
             # Validate bucket naming convention.
             if not re.match(name_pattern, bucket['Name']):
-                print "Name pattern did not matched ", bucket['Name']
                 bucket['validations']['nameresult'] = "Invalid Bucket Name"
-                bucket['validations']['result'] = ['FAIL']
+                bucket['validations']['result'] = 'FAIL'
             else:
                 bucket['validations']['nameresult'] = "Bucket Name Valid"
 

@@ -10,6 +10,7 @@ CLI Interface to Aws Services.
 
 import pprint
 import prettytable
+import textwrap
 import orcalib.aws_service as aws_service
 
 
@@ -152,6 +153,43 @@ class S3CommandHandler(object):
             pprinter.pprint(bucketlist)
         else:
             self.display_s3_buckelist_table(bucketlist)
+
+    def display_s3_bucket_validations_table(self, bucketlist):
+        '''
+        List the S3 buckets and the validation results in tabular format
+        '''
+        # Setup Table.
+        header = ["Bucket Name", "Profile",
+                  "Naming Policy", "Tag Validation",
+                  "Result"]
+        table = prettytable.PrettyTable(header)
+
+        for bucket in bucketlist:
+            name = bucket['Name']
+            profile = bucket['profile_name'][0]
+            naming_policy = bucket['validations']['nameresult']
+            tag_policy = textwrap.fill(bucket['validations']['tagresult'],
+                                       40)
+            result = bucket['validations']['result']
+            row = [name, profile, naming_policy, tag_policy, result]
+            table.add_row(row)
+
+        print table
+
+    def display_s3_bucket_validations(self, outputformat='json'):
+        '''
+        Display the list of S3 buckets and the validation results.
+        '''
+        s3client = aws_service.AwsService('s3')
+        bucketlist = s3client.service.list_buckets()
+        s3client.service.populate_bucket_tagging(bucketlist)
+        s3client.service.populate_bucket_validation(bucketlist)
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(bucketlist)
+        else:
+            self.display_s3_bucket_validations_table(bucketlist)
 
 
 

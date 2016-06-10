@@ -679,6 +679,25 @@ END
 
 }
 
+function s3_list_validations()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi
+
+    echo "List Validations"
+    python - << END
+from cliclient.s3_commandhelper import S3CommandHandler
+
+s3cmdhandler = S3CommandHandler()
+s3cmdhandler.display_s3_bucket_validations(outputformat="${outputformat}")
+
+END
+
+}
+
 ###################################################
 # EC2 
 ###################################################
