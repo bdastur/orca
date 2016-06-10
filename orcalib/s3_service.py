@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
+from orcalib.aws_config import OrcaConfig
 
 
 class AwsServiceS3(object):
@@ -172,8 +174,52 @@ class AwsServiceS3(object):
                 # an exception is thrown.
                 bucket['TagSet'] = None
                 continue
-            for tag in tagdata['TagSet']:
-                bucket['TagSet'] = tag
+
+            bucket['TagSet'] = tagdata['TagSet']
+
+    def populate_bucket_validation(self, bucketlist):
+        '''
+        The API will validate the buckets  by looking at the
+        bucket naming convention and the available tags. It will save
+        the result in a dict object which can be later retrieved.
+
+        Note: Make sure to populate bucket tagging before invoking
+        this API.
+
+        :type bucketlist: List of buckets (list of dictionaries)
+        :param bucketlist: List of buckets
+        '''
+        orca_config = OrcaConfig()
+        tagset = set(orca_config.get_tagset())
+        name_pattern = orca_config.get_s3_bucket_naming_policy()
+
+        for bucket in bucketlist:
+            bucket['validations'] = {}
+            bucket_taglist = []
+            if bucket['TagSet'] is None:
+                bucket_tagset = None
+                bucket['validations']['result'] = 'FAIL'
+                bucket['validations']['tagresult'] = "No Tags Found"
+            else:
+                for obj in bucket['TagSet']:
+                    bucket_taglist.append(obj['Key'])
+                bucket_tagset = set(bucket_taglist)
+                difference = tagset.difference(bucket_tagset)
+                if len(difference) != 0:
+                    bucket['validations']['tagresult'] = "Tags Missing: " + \
+                        str(difference)
+                    bucket['validations']['result'] = 'FAIL'
+
+            # Validate bucket naming convention.
+            if not re.match(name_pattern, bucket['Name']):
+                print "Name pattern did not matched ", bucket['Name']
+                bucket['validations']['nameresult'] = "Invalid Bucket Name"
+                bucket['validations']['result'] = ['FAIL']
+            else:
+                bucket['validations']['nameresult'] = "Bucket Name Valid"
+
+            if bucket['validations'].get('result', None) is None:
+                bucket['validations']['result'] = 'PASS'
 
     def create_bucket(self, bucket_name):
         '''
