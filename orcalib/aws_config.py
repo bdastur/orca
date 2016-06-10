@@ -43,6 +43,25 @@ class OrcaConfig(object):
         except KeyError:
             return None
 
+    def get_tagset(self):
+        '''
+        Return the tag list from the orcaenv config file
+        '''
+        try:
+            return (self.parsedyaml['tagset'])
+        except KeyError:
+            return None
+
+    def get_s3_bucket_naming_policy(self):
+        '''
+        Return the s3_bucket_naming_policy from the orcaenv cfg file
+        '''
+        try:
+            return (self.parsedyaml['s3_bucket_naming_policy'])
+        except KeyError:
+            return None
+
+
 
 class AwsConfig(object):
     '''
