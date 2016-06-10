@@ -220,6 +220,8 @@ if [[ $service_type = "s3" ]]; then
     CMD_OPTIONS="a:b:dg:u:ho:"
 elif [[ $service_type = "iam" ]]; then
     CMD_OPTIONS="a:cdf:g:lo:p:ru:h"
+elif [[ $service_type = "ec2" ]]; then
+    CMD_OPTIONS="a:o:h"
 fi
 
 
@@ -292,10 +294,16 @@ if [[ $operation = "create-bucket" ]]; then
     create_bucket
 elif [[ $operation = "list-summary" ]]; then
     s3_list_summary $outputformat
+elif [[ $operation = "list-buckets" ]]; then
+    s3_list_buckets $outputformat
 elif [[ $operation = "create-user" ]]; then
     create_user_account
 elif [[ $operation = "list-users" ]]; then
     iam_list_users $outputformat
+elif [[ $operation = "list-user-permissions" ]]; then
+    iam_list_user_permissions $user $outputformat
+elif [[ $operation = "list-vms" ]]; then
+    ec2_list_vms $outputformat
 fi
 
 #Log End msg.

@@ -8,9 +8,6 @@ operations['iam']="create-user delete-user list-policies"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/orca_cmdline.sh"
 
-#s3_operations="create-bucket delete-bucket list-buckets"
-#iam_operations="create-user delete-user list-policies"
-
 
 service_type=
 
@@ -36,6 +33,8 @@ function find_options()
                     COMPREPLY=($s3_operations)
                 elif [[ $service = "iam" ]]; then
                     COMPREPLY=($iam_operations)
+                elif [[ $service = "ec2" ]]; then
+                    COMPREPLY=($ec2_operations)
                 fi
                 service_match=true
                 service_type=$service
@@ -59,6 +58,8 @@ function find_options()
             operationarr=($s3_operations)
         elif [[ $service_type = "iam" ]]; then
             operationarr=($iam_operations)
+        elif [[ $service_type = "ec2" ]]; then
+            operationarr=($ec2_operations)
         fi
 
         for operation in "${operationarr[@]}"
