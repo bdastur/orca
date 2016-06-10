@@ -155,6 +155,26 @@ class AwsServiceS3(object):
             bucket['object_size'] = objsize
             bucket['LastModified'] = lastmodified
 
+    def populate_bucket_tagging(self, bucketlist):
+        '''
+        Update the buckets information with tagging info.
+
+        :type bucketlist: List of buckets (List of dictionaries)
+        :param bucketlist: List of buckets
+        '''
+        for bucket in bucketlist:
+            profile = bucket['profile_name'][0]
+            try:
+                tagdata = self.clients[profile].get_bucket_tagging(
+                    Bucket=bucket['Name'])
+            except botocore.exceptions.ClientError:
+                # In case there are no tags for the bucket,
+                # an exception is thrown.
+                bucket['TagSet'] = None
+                continue
+            for tag in tagdata['TagSet']:
+                bucket['TagSet'] = tag
+
     def create_bucket(self, bucket_name):
         '''
         test
