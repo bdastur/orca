@@ -13,4 +13,13 @@ regions:
   - "ap-southeast-2"
   - "sa-east-1"
 
+tagset:
+  - ApplicationRole
+  - Name
+  - Cluster
+  - Environment
+  - OwnerEmail
+  - Project
+  - BusinessUnit
+  - SupportEmail
 
