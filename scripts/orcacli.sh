@@ -32,6 +32,7 @@ create_accesskey=false
 create_logincredentials=false
 delimiter=false
 force_password=
+outputformat=
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -101,8 +102,11 @@ function show_help_service()
                 echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
                 ;;
             l)
-                echo "-l login profile: [OPTIONAL] If specified create a login profile with a login password"
+                echo "-l login     : [OPTIONAL] If specified create a login profile with a login password"
                 ;;
+            o)
+                echo "-o output   : [OPTIONAL] \"json|table\" (Default: table)."
+                ;; 
             p)
                 echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
                 ;; 
@@ -213,9 +217,9 @@ validate_service_type $service_type
 shift
 
 if [[ $service_type = "s3" ]]; then
-    CMD_OPTIONS="a:b:dg:u:h"
+    CMD_OPTIONS="a:b:dg:u:ho:"
 elif [[ $service_type = "iam" ]]; then
-    CMD_OPTIONS="a:cdf:g:lp:ru:h"
+    CMD_OPTIONS="a:cdf:g:lo:p:ru:h"
 fi
 
 
@@ -256,6 +260,9 @@ while getopts ${CMD_OPTIONS} option; do
         l)
             create_logincredentials=true
             ;;
+        o)
+            outputformat=$OPTARG
+            ;;
         p)
             policies=$OPTARG
             ;;
@@ -284,9 +291,11 @@ debug=$curr_debug
 if [[ $operation = "create-bucket" ]]; then
     create_bucket
 elif [[ $operation = "list-summary" ]]; then
-    s3_list_summary
+    s3_list_summary $outputformat
 elif [[ $operation = "create-user" ]]; then
     create_user_account
+elif [[ $operation = "list-users" ]]; then
+    iam_list_users $outputformat
 fi
 
 #Log End msg.
