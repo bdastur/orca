@@ -119,6 +119,22 @@ class AwsServiceUt(unittest.TestCase):
         for statement in statements:
             print "Statement: ", statement
 
+    def test_generate_new_iam_policy_document(self):
+        print "Test api generate_new_iam_policy_document"
+        service_client = aws_service.AwsService('iam')
+        self.failUnless(service_client.service.clients)
+
+        actions = ["ec2:*", "s3:*"]
+        resources = ["arn:aws:s3:::testresource",
+                     "arn:aws:s3:::testresource/*"]
+        effect = "allow"
+
+        policy_doc = service_client.service.generate_new_iam_policy_document(
+            resources,
+            actions,
+            effect)
+        print "Policy Doc: \n", policy_doc
+
     # EC2 testcases.
     def test_list_vms(self):
         print "Test simple usecase to list all ec2 instances"
