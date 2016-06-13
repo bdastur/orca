@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
+import jinja2
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
@@ -149,8 +151,44 @@ class AwsServiceIAM(object):
         return statements
 
 
+    def generate_new_iam_policy_document(self,
+                                         resources,
+                                         actions,
+                                         effect):
+        '''
+        The API generates an IAM Policy document that can be used to
+        create a new IAM policy.
+        '''
+        #searchpath = "./"
+        searchpath = "/Users/behzad_dastur/CODE/AWS/orcajun10/orca/orcalib"
+        templatefile = "./templates/iam_policy.j2"
+        now = datetime.datetime.now()
+        timestamp = "%s%s" % (str(now.microsecond), str(now.second))
+        updatedate = "%s/%s/%s %s:%s" % \
+            (str(now.year), str(now.month), str(now.day),
+             str(now.hour), str(now.minute))
 
 
+        policy_obj = {}
+        policy_obj['version'] = "2012-10-17"
+        policy_obj['update_date'] = updatedate
+        policy_obj['statements'] = []
+
+        # Create a statement.
+        statement = {}
+        statement['sid'] = "STMT%s" % (timestamp)
+        statement['actions'] = actions
+        statement['effect'] = effect
+        statement['resources'] = resources
+        policy_obj['statements'].append(statement)
+
+        template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
+        env = jinja2.Environment(loader=template_loader,
+                                 trim_blocks=False,
+                                 lstrip_blocks=False)
+        template = env.get_template(templatefile)
+        data = template.render(policy_obj)
+        return data
 
 
 
