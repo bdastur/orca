@@ -125,11 +125,12 @@ class AwsServiceUt(unittest.TestCase):
         self.failUnless(service_client.service.clients)
 
         actions = ["ec2:*", "s3:*"]
-        resources = ["arn:aws:s3:::testresource",
-                     "arn:aws:s3:::testresource/*"]
+        resources = ["testresource",
+                     "testresource/*"]
         effect = "allow"
 
         policy_doc = service_client.service.generate_new_iam_policy_document(
+            's3',
             resources,
             actions,
             effect)

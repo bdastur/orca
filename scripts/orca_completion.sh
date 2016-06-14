@@ -66,6 +66,8 @@ function find_options()
         do
           if [[ $operation = $lastoption ]]; then
               operation_match=true
+              # We matched the operation, which not sends us to next stage.
+              COMPREPLY=("help")
               break
           fi
         done
@@ -91,9 +93,7 @@ function _cmdline_complete()
     option=($line)
     lastoption=${option[${#option[@]}-1]}
     stage=${#option[@]}
-
     find_options ${lastoption} ${stage}
-
 
 }
 

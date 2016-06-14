@@ -173,8 +173,8 @@ class AwsServiceIAM(object):
 
         return statements
 
-
     def generate_new_iam_policy_document(self,
+                                         resource_type,
                                          resources,
                                          actions,
                                          effect):
@@ -195,12 +195,19 @@ class AwsServiceIAM(object):
         policy_obj['update_date'] = updatedate
         policy_obj['statements'] = []
 
+
+        # Create resource arn.
+        resources_arn = []
+        if resource_type == "s3":
+            for resource in resources:
+                resource_arn = "arn:aws:s3:::" + resource
+                resources_arn.append(resource_arn)
         # Create a statement.
         statement = {}
         statement['sid'] = "STMT%s" % (timestamp)
         statement['actions'] = actions
         statement['effect'] = effect
-        statement['resources'] = resources
+        statement['resources'] = resources_arn
         policy_obj['statements'].append(statement)
 
         template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
