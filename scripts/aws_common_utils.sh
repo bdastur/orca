@@ -62,6 +62,26 @@ function validate_account_info()
     fi
 }
 
+function validate_username()
+{
+    local account=$1
+    local user=$2
+
+    if [[ -z $user ]]; then
+        echo "No user. skip validation"
+        return
+    fi
+
+    # validate user exists.
+    aws_user=$(aws iam list-users --profile $account | grep $user)
+    if [[ -z $aws_user ]]; then
+        echo "Error: Invalid User provided $user"
+        exit_log
+    else
+        debug "User validi $user"
+    fi
+}
+
 function validate_groupname()
 {
     local groupname=$1
@@ -171,6 +191,15 @@ function validate_user_input()
             validate_account_info
             validate_groupname $group
             validate_policies "$policies"
+        elif [[ $operation = "grant-access" ]]; then
+            if [[ ( -z $account ) || ( -z $user ) ]]; then
+                echo "Error: Required Arguments -u <username> and -a <account> not provided."
+                echo "For Usage, execute: `basename $0` -h"
+                echo ""
+                exit_log
+            fi
+            validate_account_info
+            validate_username $account $user
         fi
     fi
 
@@ -593,6 +622,30 @@ function create_s3_access_managed_policy()
 
     # Cleanup the policy file
     rm ${policy_file}
+}
+
+function create_iam_policy_document()
+{
+    local resource_type=$1
+
+    local resource_names=$2
+    local resource_actions=$3
+
+
+    python - << END
+import orcalib.aws_service as aws_service
+
+
+resources="${resource_names}".split(",")
+actions="${resource_actions}".split(",")
+iamclient = aws_service.AwsService('iam')
+policy_doc = iamclient.service.generate_new_iam_policy_document("${resource_type}",
+                                                                resources,
+                                                                actions,
+                                                                "allow")
+print "Policy doc: ", policy_doc
+
+END
 
 }
 
