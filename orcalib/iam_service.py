@@ -218,5 +218,48 @@ class AwsServiceIAM(object):
         data = template.render(policy_obj)
         return data
 
+    def get_user_groups(self, user):
+        profile = user['profile_name']
+        groupdata = self.clients[profile].list_groups_for_user(
+                        UserName=user['UserName'])
+        return groupdata['Groups']
+
+    def get_user_attached_policy_names(self,
+                                   UserName=None,
+                                   profile_name=None):
+        '''
+        Return all policies attached to user or a group to which
+        the user belongs.
+        '''
+        if UserName is None or profile_name is None:
+            print "Error: Expected UserName and profile_name"
+            return None
+
+        client = self.clients[profile_name]
+
+        try:
+            client.get_user(UserName=UserName)
+        except botocore.exceptions.ClientError as clienterr:
+            print "[%s: %s] User not found [%s]" % \
+                (profile_name, UserName, clienterr)
+
+        user_groups = client.list_groups_for_user(UserName=UserName)
+
+        policies = []
+        # Get policies attached to groups
+        for group in user_groups['Groups']:
+            group_policies = client.list_attached_group_policies(
+                GroupName=group['GroupName'])
+            for policy in group_policies['AttachedPolicies']:
+                policies.append(policy['PolicyName'])
+
+
+        # Get policies attached to user
+        user_policies = client.list_attached_user_policies(
+            UserName=UserName)
+        for policy in user_policies['AttachedPolicies']:
+            policies.append(policy['PolicyName'])
+
+        return policies
 
 
