@@ -34,8 +34,8 @@ class AwsServiceEC2(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
+            self.awsconfig = AwsConfig()
+            profiles = self.awsconfig.get_profiles()
 
             for profile in profiles:
                 session = boto3.Session(profile_name=profile)
@@ -176,11 +176,14 @@ class AwsServiceEC2(object):
         for profile in self.clients.keys():
             if profile_names is not None and profile not in profile_names:
                 continue
+
+            ownerid = self.awsconfig.get_aws_owner_id(profile)
             for region in self.regions:
                 if regions is not None and region not in regions:
                     continue
 
-                snaps = self.clients[profile][region].describe_snapshots()
+                snaps = self.clients[profile][region].describe_snapshots(
+                    OwnerIds=[ownerid])
 
                 for s in snaps['Snapshots']:
                     s['region'] = region

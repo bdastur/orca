@@ -109,4 +109,10 @@ class AwsConfig(object):
         '''
         return self.cfgparser.get(profilename, 'aws_secret_access_key')
 
+    def get_aws_owner_id(self, profilename):
+        '''
+        Return the owner id for the profile.
+        '''
+        return self.cfgparser.get(profilename, 'owner_id')
+
 
