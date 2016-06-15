@@ -33,6 +33,9 @@ create_logincredentials=false
 delimiter=false
 force_password=
 outputformat=
+resource_actions=
+resource_type=
+resource_names=
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -104,14 +107,23 @@ function show_help_service()
             l)
                 echo "-l login     : [OPTIONAL] If specified create a login profile with a login password"
                 ;;
+            n)
+                echo "-n name      : Resource name (Used with grant-access/revoke-access)"
+                ;;
             o)
-                echo "-o output   : [OPTIONAL] \"json|table\" (Default: table)."
+                echo "-o output    : [OPTIONAL] \"json|table\" (Default: table)."
                 ;; 
             p)
                 echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
                 ;; 
             r)
-                echo "-r delimiter: [OPTIONAL] This flag is set when list arguments like policies are passed with delimiter \":\""
+                echo "-r delimiter : [OPTIONAL] This flag is set when list arguments like policies are passed with delimiter \":\""
+                ;;
+            s)
+                echo "-s actions   : Resource actions. (used with grant-access/revoke-acess)"
+                ;;
+            t) 
+                echo "-t type      : resource type ('s3', 'iam', 'sns', 'ec2'...) used with grant-access/revoke-access"
                 ;;
             u)
                 echo "-u username  : Specify a username" 
@@ -183,13 +195,22 @@ function create_bucket()
 # Create User.
 function create_user_account()
 {
-    # Note: pass policies in quotesa ""
+    # Note: pass policies in quotes ""
     validate_user_input $service_type $operation "$policies"
     create_user $account $user
     add_user_to_group $account $user $group
     attach_user_policies $account $user "$policies"
     create_access_key $account $user $create_accesskey
     create_login_credentials $account $user $create_logincredentials
+}
+
+# Grant Access.
+function grant_access_to_resource()
+{
+    echo "user: $user, group: $group type: $resource_type , name: $resource_names, actions: $resource_actions" 
+    validate_user_input $service_type $operation 
+    create_iam_policy_document $resource_type "$resource_names" "$resource_actions"
+
 }
 
 
@@ -219,7 +240,7 @@ shift
 if [[ $service_type = "s3" ]]; then
     CMD_OPTIONS="a:b:dg:u:ho:"
 elif [[ $service_type = "iam" ]]; then
-    CMD_OPTIONS="a:cdf:g:lo:p:ru:h"
+    CMD_OPTIONS="a:cdf:g:lo:n:p:rt:s:u:h"
 elif [[ $service_type = "ec2" ]]; then
     CMD_OPTIONS="a:o:h"
 fi
@@ -262,6 +283,9 @@ while getopts ${CMD_OPTIONS} option; do
         l)
             create_logincredentials=true
             ;;
+        n)
+            resource_names=$OPTARG
+            ;;
         o)
             outputformat=$OPTARG
             ;;
@@ -270,6 +294,12 @@ while getopts ${CMD_OPTIONS} option; do
             ;;
         r)
             delimiter=true
+            ;;
+        s)
+            resource_actions=$OPTARG
+            ;;
+        t)
+            resource_type=$OPTARG
             ;;
         u)
             user=$OPTARG
@@ -304,6 +334,8 @@ elif [[ $operation = "list-users" ]]; then
     iam_list_users $outputformat
 elif [[ $operation = "list-user-permissions" ]]; then
     iam_list_user_permissions $user $outputformat
+elif [[ $operation = "grant-access" ]]; then
+    grant_access_to_resource
 elif [[ $operation = "list-vms" ]]; then
     ec2_list_vms $outputformat
 fi

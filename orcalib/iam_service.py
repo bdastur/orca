@@ -1,9 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import datetime
+import jinja2
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
+
+
+def get_absolute_path_for_file(file_name, splitdir=None):
+    '''
+    Return the filename in absolute path for any file
+    passed as relative path.
+    '''
+    base = os.path.basename(__file__)
+    if splitdir is not None:
+        splitdir = splitdir + "/" + base
+    else:
+        splitdir = base
+
+    if os.path.isabs(__file__):
+        abs_file_path = os.path.join(__file__.split(splitdir)[0],
+                                     file_name)
+    else:
+        abs_file = os.path.abspath(__file__)
+        abs_file_path = os.path.join(abs_file.split(splitdir)[0],
+                                     file_name)
+
+    return abs_file_path
 
 
 class AwsServiceIAM(object):
@@ -148,9 +173,50 @@ class AwsServiceIAM(object):
 
         return statements
 
+    def generate_new_iam_policy_document(self,
+                                         resource_type,
+                                         resources,
+                                         actions,
+                                         effect):
+        '''
+        The API generates an IAM Policy document that can be used to
+        create a new IAM policy.
+        '''
+        searchpath = get_absolute_path_for_file("./")
+        templatefile = "./templates/iam_policy.j2"
+        now = datetime.datetime.now()
+        timestamp = "%s%s" % (str(now.microsecond), str(now.second))
+        updatedate = "%s/%s/%s %s:%s" % \
+            (str(now.year), str(now.month), str(now.day),
+             str(now.hour), str(now.minute))
+
+        policy_obj = {}
+        policy_obj['version'] = "2012-10-17"
+        policy_obj['update_date'] = updatedate
+        policy_obj['statements'] = []
 
 
+        # Create resource arn.
+        resources_arn = []
+        if resource_type == "s3":
+            for resource in resources:
+                resource_arn = "arn:aws:s3:::" + resource
+                resources_arn.append(resource_arn)
+        # Create a statement.
+        statement = {}
+        statement['sid'] = "STMT%s" % (timestamp)
+        statement['actions'] = actions
+        statement['effect'] = effect
+        statement['resources'] = resources_arn
+        policy_obj['statements'].append(statement)
 
+        template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
+        env = jinja2.Environment(loader=template_loader,
+                                 trim_blocks=False,
+                                 lstrip_blocks=False)
+        template = env.get_template(templatefile)
+        data = template.render(policy_obj)
+        return data
 
 
 
