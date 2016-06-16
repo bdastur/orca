@@ -140,12 +140,13 @@ class AwsServiceEC2(object):
             if profile_names is not None and \
                     profile not in profile_names:
                 continue
+            ownerid = self.awsconfig.get_aws_owner_id(profile)
             for region in self.regions:
                 if regions is not None and \
                         region not in regions:
                     continue
                 images = self.clients[profile][region].\
-                    describe_images()
+                    describe_images(Owners=[ownerid])
                 for image in images['Images']:
                     image['region'] = region
                     image['profile_name'] = profile
@@ -203,10 +204,9 @@ class AwsServiceEC2(object):
 
                 client = self.clients[profile][region]
                 groups = client.describe_security_groups()
-
                 for group in groups['SecurityGroups']:
-                    groups['region'] = region
-                    groups['profile_name'] = profile
+                    group['region'] = region
+                    group['profile_name'] = profile
                     security_groups.append(group)
 
         return security_groups
