@@ -463,7 +463,7 @@ import boto3
 import botocore
 
 
-size = 10
+size = 11
 chars = string.digits + string.ascii_letters + "[{}]"
 
 if "$password_flag" == "True":

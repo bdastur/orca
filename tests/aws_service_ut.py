@@ -136,6 +136,17 @@ class AwsServiceUt(unittest.TestCase):
             effect)
         print "Policy Doc: \n", policy_doc
 
+    def test_get_user_attached_policies(self):
+        print "Test the get permissions info api"
+        service_client = aws_service.AwsService('iam')
+        self.failUnless(service_client.service.clients)
+
+        statements = service_client.service.get_user_attached_policies(
+            UserName='behzad_dastur', profile_name='default')
+
+        for statement in statements:
+            print "Statement: ", statement
+
     # EC2 testcases.
     def test_list_vms(self):
         print "Test simple usecase to list all ec2 instances"

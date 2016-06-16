@@ -122,6 +122,7 @@ class AwsServiceIAM(object):
             group_policies = client.list_attached_group_policies(
                 GroupName=group['GroupName'])
             for policy in group_policies['AttachedPolicies']:
+                policy['type'] = 'group'
                 policies.append(policy)
 
 
@@ -129,6 +130,7 @@ class AwsServiceIAM(object):
         user_policies = client.list_attached_user_policies(
             UserName=UserName)
         for policy in user_policies['AttachedPolicies']:
+            policy['type'] = 'user'
             policies.append(policy)
 
         return policies
@@ -225,8 +227,8 @@ class AwsServiceIAM(object):
         return groupdata['Groups']
 
     def get_user_attached_policy_names(self,
-                                   UserName=None,
-                                   profile_name=None):
+                                       UserName=None,
+                                       profile_name=None):
         '''
         Return all policies attached to user or a group to which
         the user belongs.
