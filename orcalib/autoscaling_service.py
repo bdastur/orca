@@ -69,7 +69,6 @@ class AwsServiceAutoScaling(object):
                 groups = self.clients[profile][region].\
                     describe_auto_scaling_groups()
                 for group in groups['AutoScalingGroups']:
-                    print group['AutoScalingGroupName']
                     self.auto_scaling_groups[profile][region].append(group[
                         'AutoScalingGroupName'])
                     group['region'] = region
