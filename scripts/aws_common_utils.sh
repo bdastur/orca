@@ -179,6 +179,14 @@ function validate_user_input()
             fi
             validate_account_info
             validate_bucket $bucketname
+        elif  [[ $operation = "create-lifecycle-policy" ]]; then
+            if [[ ( -z $account ) || ( -z $bucketname ) ]]; then
+                echo "Error: Required Arguments -b <bucketname> and -a <account> not provided."
+                echo "For Usage, execute:  `basename $0` -h"
+                echo ""
+                exit_log
+            fi
+            validate_account_info
         fi
     elif [[ $service_type = "iam" ]]; then
         if [[ $operation = "create-user" ]]; then
@@ -748,6 +756,69 @@ s3cmdhandler = S3CommandHandler()
 s3cmdhandler.display_s3_bucket_validations(outputformat="${outputformat}")
 
 END
+
+}
+
+function s3_create_lifecycle_policy()
+{
+    local prefix=$1
+    local expire_duration=$2
+    local ia_transition_duration=$3
+    local glacier_transition_duration=$4
+
+    local tmpfile="/tmp/s3policycreate-$(date +%s)"
+
+    echo "Create lifecycle policy"
+    validate_user_input $service_type $operation
+
+    if [[ (-z $prefix) || (-z $expire_duration) || (-z $ia_transition_duration) || (-z glacier_transition_duration)  ]]; then
+        echo "Error: Creating lifecycle policy requires prefix, expire duration, IA transition duration and glacier transition duration"
+        exit_log
+     fi
+
+    python - << END
+import boto3
+import botocore
+import orcalib.aws_service as aws_service
+
+
+s3client = aws_service.AwsService('s3')
+
+rule_obj = {}                                                               
+rule_obj['id'] = "testrule"
+rule_obj['prefix'] = "${prefix}"
+rule_obj['status'] = "Enabled"
+rule_obj['expire_duration'] =  "${expire_duration}"
+rule_obj['standard_ia_transition_duration'] =  "${ia_transition_duration}"
+rule_obj['glacier_transition_duration'] = "${glacier_transition_duration}"
+rules = []
+rules.append(rule_obj)
+policyobj = {}
+policyobj['rules'] = rules
+
+policydoc = s3client.service.generate_new_s3_lifecycle_policy_document(policyobj)
+
+session = boto3.Session(profile_name="${account}")
+botoclient = session.client('s3')
+
+try:
+    botoclient.put_bucket_lifecycle_configuration(Bucket="${bucketname}",
+                                                LifecycleConfiguration=policydoc)
+except botocore.exceptions.ClientError as boto_exception:                                                                                                                                          
+    print "[%s] " % boto_exception
+    fp = open("${tmpfile}", 'w')
+    fp.close()
+
+END
+
+    if [[ -e $tmpfile ]]; then
+        echo "Error: Failed to Attach Lifecycle policy to $bucketname"
+        rm $tmpfile
+        exit_log
+    else
+        debug "Lifecycle policy created for $bucketname/$prefix"
+    fi
+
 
 }
 

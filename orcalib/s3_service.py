@@ -5,6 +5,7 @@ import re
 import os
 import datetime
 import jinja2
+import json
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
@@ -260,10 +261,10 @@ class AwsServiceS3(object):
         templatefile = "./templates/s3_lifecycle_policy.j2"
         now = datetime.datetime.now()
         timestamp = "%s%s" % (str(now.microsecond), str(now.second))
-        updatedate = "%s/%s/%s %s:%s" % \
-            (str(now.year), str(now.month), str(now.day),
-             str(now.hour), str(now.minute))
-        print "%s, %s" % (timestamp, updatedate)
+
+        for rule in policyobj['rules']:
+            if rule.get('id', None):
+                rule['id'] = "rule-%s" % str(timestamp)
 
         template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
         env = jinja2.Environment(loader=template_loader,
@@ -271,7 +272,8 @@ class AwsServiceS3(object):
                                  lstrip_blocks=False)
         template = env.get_template(templatefile)
         data = template.render(policyobj)
-        return data
+        jdata = json.loads(data)
+        return jdata
 
     def create_bucket(self, bucket_name):
         '''
