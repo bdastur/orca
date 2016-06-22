@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='orca',
+    name='orcalib',
     version='0.1',
 
     description='AWS Tools and Utilities for Operational Simplification',
@@ -12,7 +12,7 @@ setup(
     author='Behzad Dastur',
 
     packages=find_packages(exclude=('tests*','scripts','server','cliclient')),
-
+    install_requires=[],
     # Available classifiers: https://goo.gl/G1iJ2B
     classifiers=[
         'Environment :: Console',
