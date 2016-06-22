@@ -89,6 +89,29 @@ class AwsServiceUt(unittest.TestCase):
         regions = service_client.get_regions()
         print regions
 
+    def test_generate_new_s3_lifecycle_policy_document(self):
+        print "Test generate_new_s3_lifecycle_policy_document API"
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service.clients is not None)
+
+        rule_obj = {}
+        rule_obj['id'] = "testrule"
+        rule_obj['prefix'] = "TESTFOLDER/*"
+        rule_obj['status'] = "Enabled"
+        rule_obj['expire_duration'] = 500
+        rule_obj['standard_ia_transition_duration'] = 45
+        rule_obj['glacier_transition_duration '] = 60
+        rules = []
+        rules.append(rule_obj)
+        policyobj = {}
+        policyobj['rules'] = rules
+
+        policydoc = \
+            service_client.service.\
+            generate_new_s3_lifecycle_policy_document(policyobj)
+        print "Policy doc: ", policydoc
+
+
     # IAM testcases.
     def test_list_users(self):
         print "Test the iam api to list users"

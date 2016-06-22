@@ -2,10 +2,36 @@
 # -*- coding: utf-8 -*-
 
 import re
+import os
+import datetime
+import jinja2
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
 from orcalib.aws_config import OrcaConfig
+
+
+
+def get_absolute_path_for_file(file_name, splitdir=None):
+    '''
+    Return the filename in absolute path for any file
+    passed as relative path.
+    '''
+    base = os.path.basename(__file__)
+    if splitdir is not None:
+        splitdir = splitdir + "/" + base
+    else:
+        splitdir = base
+
+    if os.path.isabs(__file__):
+        abs_file_path = os.path.join(__file__.split(splitdir)[0],
+                                     file_name)
+    else:
+        abs_file = os.path.abspath(__file__)
+        abs_file_path = os.path.join(abs_file.split(splitdir)[0],
+                                     file_name)
+
+    return abs_file_path
 
 
 class AwsServiceS3(object):
@@ -223,6 +249,29 @@ class AwsServiceS3(object):
 
             if bucket['validations'].get('result', None) is None:
                 bucket['validations']['result'] = 'PASS'
+
+    def generate_new_s3_lifecycle_policy_document(self,
+                                                  policyobj):
+        '''
+        Generate a new S3 lifecycle policy document
+        '''
+
+        searchpath = get_absolute_path_for_file("./")
+        templatefile = "./templates/s3_lifecycle_policy.j2"
+        now = datetime.datetime.now()
+        timestamp = "%s%s" % (str(now.microsecond), str(now.second))
+        updatedate = "%s/%s/%s %s:%s" % \
+            (str(now.year), str(now.month), str(now.day),
+             str(now.hour), str(now.minute))
+        print "%s, %s" % (timestamp, updatedate)
+
+        template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
+        env = jinja2.Environment(loader=template_loader,
+                                 trim_blocks=False,
+                                 lstrip_blocks=False)
+        template = env.get_template(templatefile)
+        data = template.render(policyobj)
+        return data
 
     def create_bucket(self, bucket_name):
         '''
