@@ -237,6 +237,9 @@ class AwsServiceS3(object):
                         bucket['validations']['tagresult'] = "Tags Missing: " \
                             + str(difference)
                         bucket['validations']['result'] = 'FAIL'
+                    else:
+                        bucket['validations']['tagresult'] = "All Tags Found"
+                        bucket['validations']['result'] = 'PASS'
             except KeyError:
                 bucket['validations']['result'] = 'FAIL'
                 bucket['validations']['tagresult'] = "No Tags Found"
