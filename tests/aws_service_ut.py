@@ -95,12 +95,11 @@ class AwsServiceUt(unittest.TestCase):
         self.failUnless(service_client.service.clients is not None)
 
         rule_obj = {}
-        rule_obj['id'] = "testrule"
         rule_obj['prefix'] = "TESTFOLDER/*"
         rule_obj['status'] = "Enabled"
         rule_obj['expire_duration'] = 500
         rule_obj['standard_ia_transition_duration'] = 45
-        rule_obj['glacier_transition_duration '] = 60
+        rule_obj['glacier_transition_duration'] = 60
         rules = []
         rules.append(rule_obj)
         policyobj = {}

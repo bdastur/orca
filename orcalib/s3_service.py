@@ -43,7 +43,8 @@ class AwsServiceS3(object):
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
-                 secret_access_key=None):
+                 secret_access_key=None,
+                 iam_role_discover=False):
         '''
         Create a S3 service client to one ore more environments by name.
         '''
@@ -60,12 +61,16 @@ class AwsServiceS3(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
+            if iam_role_discover:
+                session = boto3.Session()
+                self.clients['default'] = session.client(service)
+            else:
+                awsconfig = AwsConfig()
+                profiles = awsconfig.get_profiles()
 
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = session.client(service)
+                for profile in profiles:
+                    session = boto3.Session(profile_name=profile)
+                    self.clients[profile] = session.client(service)
 
     def list_buckets(self, profile_names=None):
         '''
@@ -269,12 +274,15 @@ class AwsServiceS3(object):
             if rule.get('id', None):
                 rule['id'] = "rule-%s" % str(timestamp)
 
+        print "policyobj: ", policyobj
         template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
         env = jinja2.Environment(loader=template_loader,
                                  trim_blocks=False,
                                  lstrip_blocks=False)
         template = env.get_template(templatefile)
         data = template.render(policyobj)
+        print "data: ", data
+
         jdata = json.loads(data)
         return jdata
 

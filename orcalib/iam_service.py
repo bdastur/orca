@@ -39,7 +39,8 @@ class AwsServiceIAM(object):
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
-                 secret_access_key=None):
+                 secret_access_key=None,
+                 iam_role_discover=False):
         '''
         Create a iam service client to one ore more environments by name.
         '''
@@ -56,12 +57,16 @@ class AwsServiceIAM(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
+            if iam_role_discover:
+                session = boto3.Session()
+                self.client['default'] = session.client(service)
+            else:
+                awsconfig = AwsConfig()
+                profiles = awsconfig.get_profiles()
 
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = session.client(service)
+                for profile in profiles:
+                    session = boto3.Session(profile_name=profile)
+                    self.clients[profile] = session.client(service)
 
     def list_users(self, profile_names=None):
         '''
