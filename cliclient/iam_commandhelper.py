@@ -160,3 +160,61 @@ class IAMCommandHandler(object):
             self.display_iam_user_permissions_table(user_name,
                                                     profile_perms)
 
+    def display_iam_user_policies_table(self,
+                                        user_name,
+                                        policyinfo):
+        '''
+        Display user policy info in tabular format
+        '''
+        table = prettytable.PrettyTable()
+        table.add_column("User Name", [user_name])
+
+        for profile in policyinfo.keys():
+
+            if policyinfo[profile] is None:
+                continue
+
+            policystr = ""
+            for policy in policyinfo[profile]:
+                policyname = policy['PolicyName']
+                policy_type = policy['type']
+
+                tempstr = "Name: " + policyname
+                policystr = policystr + self.fillstr(tempstr, 30)
+                tempstr = "Type: " + policy_type
+                policystr = policystr + self.fillstr(tempstr, 30)
+
+            policystr = textwrap.fill(policystr, 34)
+            table.add_column(profile, [policystr], align="l")
+
+        print table
+
+    def display_iam_user_policies(self,
+                                  user_name,
+                                  outputformat='json'):
+        '''
+        Display policies attached to the user.
+        '''
+
+        awsconfig = aws_config.AwsConfig()
+        profiles = awsconfig.get_profiles()
+
+        service_client = aws_service.AwsService('iam')
+
+        policyinfo = {}
+        for profile in profiles:
+            policyinfo[profile] = []
+            policies = service_client.service.get_user_attached_policies(
+                UserName=user_name,
+                profile_name=profile)
+            policyinfo[profile] = policies
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(policyinfo)
+
+        if outputformat == "table":
+            self.display_iam_user_policies_table(user_name,
+                                                 policyinfo)
+
+

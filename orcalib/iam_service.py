@@ -118,8 +118,13 @@ class AwsServiceIAM(object):
         except botocore.exceptions.ClientError as clienterr:
             print "[%s: %s] User not found [%s]" % \
                 (profile_name, UserName, clienterr)
+            return None
 
-        user_groups = client.list_groups_for_user(UserName=UserName)
+        try:
+            user_groups = client.list_groups_for_user(UserName=UserName)
+        except botocore.exceptions.ClientError as botoerror:
+            print "[%s: %s] Could not get groups for user [%s]" % \
+                (profile_name, UserName, botoerror)
 
         policies = []
         # Get policies attached to groups

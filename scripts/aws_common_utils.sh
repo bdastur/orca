@@ -239,6 +239,41 @@ END
 
 }
 
+function iam_get_user_account()
+{
+    local account=$1
+    local tmpfile="/tmp/orcaucreate-$(date +%s)"
+
+    
+    python - << END
+import boto3
+import botocore
+
+    session = boto3.Session(profile_name="${account}")
+    iamclient = session.client('iam')
+
+    try:
+        userinfo = iamclient.get_user()
+        iam_arn = userinfo['User']['Arn']
+        account_id=iam_arn.split("arn:aws:iam::")[1].split(":")[0] 
+        print account_id
+    except botocore.exceptions.ClientError as boto_exception:
+        print "[%s] " % boto_exception
+        fp = open("${tmpfile}", 'w')
+        fp.close()
+
+END
+
+if [[ -e $tmpfile ]]; then
+    echo "Error: Failed to Get user account $user"
+    rm $tmpfile
+    exit_log
+else
+    debug "Account id found."
+fi
+
+}
+
 function iam_list_user_permissions()
 {
     user=$1
@@ -259,6 +294,31 @@ from cliclient.iam_commandhelper import IAMCommandHandler
 
 iamcmdhandler = IAMCommandHandler()
 iamcmdhandler.display_iam_user_permissions("${user}", outputformat="${outputformat}")
+
+END
+
+}
+
+function iam_list_user_policies()
+{
+    local user=$1
+    local outputformat=$2
+
+    if [[ -z $user ]]; then
+        echo "Error: Required username"
+        exit_log
+    fi
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi
+
+    echo "test"  
+    python - << END
+from cliclient.iam_commandhelper import IAMCommandHandler
+                                                                                                                                                                                                   
+iamcmdhandler = IAMCommandHandler()
+iamcmdhandler.display_iam_user_policies("${user}", outputformat="${outputformat}")
 
 END
 

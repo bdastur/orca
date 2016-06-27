@@ -370,6 +370,8 @@ elif [[ $operation = "list-users" ]]; then
     iam_list_users $outputformat
 elif [[ $operation = "list-user-permissions" ]]; then
     iam_list_user_permissions $user $outputformat
+elif [[ $operation = "list-policies" ]]; then
+    iam_list_user_policies $user $outputformat
 elif [[ $operation = "grant-access" ]]; then
     grant_access_to_resource
 elif [[ $operation = "list-vms" ]]; then
