@@ -376,6 +376,8 @@ elif [[ $operation = "grant-access" ]]; then
     grant_access_to_resource
 elif [[ $operation = "list-vms" ]]; then
     ec2_list_vms $outputformat
+elif [[ $operation = "list-tags" ]]; then
+    ec2_list_tags $outputformat
 fi
 
 #Log End msg.

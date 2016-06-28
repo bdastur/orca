@@ -140,5 +140,47 @@ class EC2CommandHandler(object):
         else:
             self.display_ec2_vmlist_table(vmlist)
 
+    def display_ec2_tags_table(self, tagsobj):
+        '''
+        Display List of tags in tabular format
+        '''
+        header = ["Resource Id", "Resource Type", "Profile", "Tags"]
+        table = prettytable.PrettyTable(header)
+        table.align['Tags'] = "l"
+
+        for resid in tagsobj.keys():
+            resource_id = resid
+
+            obj = tagsobj[resid]
+            keys = obj.keys()
+            resource_type = obj['ResourceType']
+            profile_name = obj['profile_name']
+
+            tags_str = ""
+            for key in keys:
+                if key.startswith('tag_'):
+                    tags_str = tags_str + key + ": " + obj[key] + "\n"
+
+
+            row = [resource_id, resource_type, profile_name, tags_str]
+            table.add_row(row)
+
+            row = ["-"*20, "-"*20, "-"*20, "-"*50]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_tags(self, outputformat='json'):
+        '''
+        Display Tags for all EC2 Resources
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        tagsobj = ec2_client.service.list_tags()
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(tagsobj)
+        else:
+            self.display_ec2_tags_table(tagsobj)
+
 
 

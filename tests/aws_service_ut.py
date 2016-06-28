@@ -179,6 +179,15 @@ class AwsServiceUt(unittest.TestCase):
         for vm in vmlist:
             print "VM: ", vm
 
+    def test_list_tags(self):
+        print "Test ec2 list_tags API"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        tagsobj = ec2_client.service.list_tags()
+        for obj in tagsobj.keys():
+            print "OBJ: ", tagsobj[obj]
+
 
 
 
