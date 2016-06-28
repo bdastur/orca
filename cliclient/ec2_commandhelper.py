@@ -159,7 +159,8 @@ class EC2CommandHandler(object):
             tags_str = ""
             for key in keys:
                 if key.startswith('tag_'):
-                    tags_str = tags_str + key + ": " + obj[key] + "\n"
+                    tagname = key.split("tag_")[1]
+                    tags_str = tags_str + tagname + ": " + obj[key] + "\n"
 
 
             row = [resource_id, resource_type, profile_name, tags_str]
