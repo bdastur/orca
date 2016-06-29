@@ -98,11 +98,13 @@ class EC2CommandHandler(object):
 
         # Setup table
         header = ["Instance-Id", "InstanceType", "KeyName",
-                  "PublicDNS", "PublicIP", "PrivateDNS", "PrivateIP", 'VpcId', 'Zone']
+                  "PublicDNS", "PublicIP", "PrivateDNS",
+                  "PrivateIP", "VpcId", "Zone", "Account"]
 
         table = prettytable.PrettyTable(header)
 
         for vm in vmlist:
+            profile = vm['profile_name']
             for instance in vm['Instances']:
                 instance_id = instance['InstanceId']
                 instance_type = instance['InstanceType']
@@ -134,7 +136,7 @@ class EC2CommandHandler(object):
 
                 row = [instance_id, instance_type, key_name,
                        public_dnsname, public_ip, private_dnsname,
-                       private_ip, vpc_id, zone]
+                       private_ip, vpc_id, zone, profile]
                 table.add_row(row)
 
         print table
