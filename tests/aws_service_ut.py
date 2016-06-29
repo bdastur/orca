@@ -201,6 +201,15 @@ class AwsServiceUt(unittest.TestCase):
         for obj in tagsobj.keys():
             print "OBJ: ", tagsobj[obj]
 
+    def test_list_security_groups(self):
+        print "Test ec2 api list security groups"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        secgroups = ec2_client.service.list_security_groups(dict_type=True)
+        for secgroup in secgroups.keys():
+            print "Security group: ", secgroup, secgroups[secgroup]
+
 
 
 

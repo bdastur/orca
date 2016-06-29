@@ -378,6 +378,8 @@ elif [[ $operation = "list-vms" ]]; then
     ec2_list_vms $outputformat
 elif [[ $operation = "list-tags" ]]; then
     ec2_list_tags $outputformat
+elif [[ $operation = "list-secgroups" ]]; then
+    ec2_list_sec_groups $outputformat
 fi
 
 #Log End msg.

@@ -201,8 +201,16 @@ class AwsServiceEC2(object):
 
         return snapshots
 
-    def list_security_groups(self, profile_names=None, regions=None):
-        security_groups = list()
+    def list_security_groups(self,
+                             profile_names=None,
+                             regions=None,
+                             dict_type=False):
+
+        if dict_type:
+            security_groups = {}
+        else:
+            security_groups = list()
+
         for profile in self.clients.keys():
             if profile_names is not None and profile not in profile_names:
                 continue
@@ -213,9 +221,15 @@ class AwsServiceEC2(object):
                 client = self.clients[profile][region]
                 groups = client.describe_security_groups()
                 for group in groups['SecurityGroups']:
-                    group['region'] = region
-                    group['profile_name'] = profile
-                    security_groups.append(group)
+                    if dict_type:
+                        security_groups[group['GroupId']] = group
+                        security_groups[group['GroupId']]['region'] = region
+                        security_groups[group['GroupId']]['profile_name'] = \
+                            profile
+                    else:
+                        group['region'] = region
+                        group['profile_name'] = profile
+                        security_groups.append(group)
 
         return security_groups
 

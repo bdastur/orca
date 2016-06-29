@@ -197,5 +197,60 @@ class EC2CommandHandler(object):
         else:
             self.display_ec2_tags_table(tagsobj)
 
+    def display_ec2_sec_groups_table(self, secgroups):
+        '''
+        Display security groups in tabular format
+        '''
+        print "Sec groups table"
+        header = ["Group Id", "Group Name", "Zone", "Account", "Instances"]
+        table = prettytable.PrettyTable(header)
+        table.align["Instances"] = "l"
+
+        for secgroup in secgroups.keys():
+            group_id = secgroup
+
+            obj = secgroups[secgroup]
+            group_name = obj['GroupName']
+            zone = obj['region']
+            account = obj['profile_name']
+            try:
+                instances = len(obj['vm_list'])
+            except KeyError:
+                instances = 0
+
+            row = [group_id, group_name, zone, account, instances]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_sec_groups(self, outputformat="json"):
+        '''
+        Display security groups
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        vmlist = ec2_client.service.list_vms()
+        secgroups = ec2_client.service.list_security_groups(dict_type=True)
+
+        for vm in vmlist:
+            for instance in vm['Instances']:
+                instance_id = instance['InstanceId']
+                vm_secgroups = instance['SecurityGroups']
+                for vm_secgroup in vm_secgroups:
+                    group_id = vm_secgroup['GroupId']
+                    if secgroups[group_id].get('vm_list', None) is None:
+                        secgroups[group_id]['vm_list'] = []
+
+                    secgroups[group_id]['vm_list'].append(instance_id)
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(secgroups)
+        else:
+            self.display_ec2_sec_groups_table(secgroups)
+
+
+
+
+
 
 
