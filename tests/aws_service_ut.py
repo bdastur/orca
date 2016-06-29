@@ -210,6 +210,15 @@ class AwsServiceUt(unittest.TestCase):
         for secgroup in secgroups.keys():
             print "Security group: ", secgroup, secgroups[secgroup]
 
+    # ELB testcases.
+    def test_list_elbs(self):
+        print "Test api to list elbs"
+        elbclient = aws_service.AwsService('elb')
+        self.failUnless(elbclient.service.clients is not None)
+
+        elbs = elbclient.service.list_elbs()
+        for elb in elbs:
+            print "ELB: ", elb
 
 
 

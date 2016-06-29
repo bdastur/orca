@@ -6,6 +6,7 @@
 #from ConfigParser import SafeConfigParser
 from orcalib.s3_service import AwsServiceS3
 from orcalib.ec2_service import AwsServiceEC2
+from orcalib.elb_service import AwsServiceELB
 from orcalib.iam_service import AwsServiceIAM
 from orcalib.cloudwatch_service import AwsServiceCloudWatch
 from orcalib.autoscaling_service import AwsServiceAutoScaling
@@ -61,6 +62,11 @@ class AwsService(object):
                                         iam_role_discover=iam_role_discover)
         elif service == "ec2":
             self.service = AwsServiceEC2(profile_names=profile_names,
+                                         access_key_id=access_key_id,
+                                         secret_access_key=secret_access_key,
+                                         iam_role_discover=iam_role_discover)
+        elif service == "elb":
+            self.service = AwsServiceELB(profile_names=profile_names,
                                          access_key_id=access_key_id,
                                          secret_access_key=secret_access_key,
                                          iam_role_discover=iam_role_discover)

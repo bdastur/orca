@@ -202,7 +202,8 @@ class EC2CommandHandler(object):
         Display security groups in tabular format
         '''
         print "Sec groups table"
-        header = ["Group Id", "Group Name", "Zone", "Account", "Instances"]
+        header = ["Group Id", "Group Name", "Zone", "Account",
+                  "Instances", "ELBs"]
         table = prettytable.PrettyTable(header)
         table.align["Instances"] = "l"
 
@@ -217,8 +218,12 @@ class EC2CommandHandler(object):
                 instances = len(obj['vm_list'])
             except KeyError:
                 instances = 0
+            try:
+                elbs = len(obj['elb_list'])
+            except KeyError:
+                elbs = 0
 
-            row = [group_id, group_name, zone, account, instances]
+            row = [group_id, group_name, zone, account, instances, elbs]
             table.add_row(row)
 
         print table
@@ -228,8 +233,11 @@ class EC2CommandHandler(object):
         Display security groups
         '''
         ec2_client = aws_service.AwsService('ec2')
+        elb_client = aws_service.AwsService('elb')
         vmlist = ec2_client.service.list_vms()
+        elbs = elb_client.service.list_elbs()
         secgroups = ec2_client.service.list_security_groups(dict_type=True)
+
 
         for vm in vmlist:
             for instance in vm['Instances']:
@@ -241,6 +249,17 @@ class EC2CommandHandler(object):
                         secgroups[group_id]['vm_list'] = []
 
                     secgroups[group_id]['vm_list'].append(instance_id)
+
+        for elb in elbs:
+            elb_name = elb['LoadBalancerName']
+            print "elb name: ", elb_name
+            elb_secgroups = elb['SecurityGroups']
+            for elb_secgroup in elb_secgroups:
+                print "elb_secgroup: ", elb_secgroup
+                if secgroups[elb_secgroup].get('elb_list', None) is None:
+                    secgroups[elb_secgroup]['elb_list'] = []
+
+                secgroups[elb_secgroup]['elb_list'].append(elb_name)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
