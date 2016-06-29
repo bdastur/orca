@@ -1,0 +1,24 @@
+{
+{%- for rule in rules %}
+    "Rules": [
+    {   
+        "Status": "{{ rule.status }}", 
+        "NoncurrentVersionExpiration": {
+            "NoncurrentDays": {{ rule.expire_duration }} 
+        },  
+        "Prefix": "{{ rule.prefix }}", 
+        "NoncurrentVersionTransitions": [
+            {   
+                "NoncurrentDays": {{ rule.standard_ia_transition_duration }}, 
+                 "StorageClass": "STANDARD_IA"
+            },  
+            {   
+                "NoncurrentDays": {{ rule.glacier_transition_duration }}, 
+                "StorageClass": "GLACIER"
+            }   
+        ],  
+        "ID": "{{ rule.id }}"
+    }{% if not loop.last %}, {% endif %} 
+{%- endfor %}
+    ]
+}

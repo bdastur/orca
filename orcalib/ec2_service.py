@@ -14,7 +14,8 @@ class AwsServiceEC2(object):
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
-                 secret_access_key=None):
+                 secret_access_key=None,
+                 iam_role_discover=False):
         '''
         Create a EC2 service client to one ore more environments by name.
         '''
@@ -34,15 +35,22 @@ class AwsServiceEC2(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            self.awsconfig = AwsConfig()
-            profiles = self.awsconfig.get_profiles()
-
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = {}
+            if iam_role_discover:
+                session = boto3.Session()
+                self.clients['default'] = {}
                 for region in self.regions:
-                    self.clients[profile][region] = \
+                    self.clients['default'][region] = \
                         session.client(service, region_name=region)
+            else:
+                self.awsconfig = AwsConfig()
+                profiles = self.awsconfig.get_profiles()
+
+                for profile in profiles:
+                    session = boto3.Session(profile_name=profile)
+                    self.clients[profile] = {}
+                    for region in self.regions:
+                        self.clients[profile][region] = \
+                            session.client(service, region_name=region)
 
     def list_vms(self, profile_names=None, regions=None):
         '''
@@ -100,9 +108,7 @@ class AwsServiceEC2(object):
         return vm_list
 
     def list_network_interfaces(self, profile_names=None, regions=None):
-
         '''
-
         :param profile_names: List of Strings
         :param regions: List of profiles
         :return:
@@ -140,12 +146,13 @@ class AwsServiceEC2(object):
             if profile_names is not None and \
                     profile not in profile_names:
                 continue
+            ownerid = self.awsconfig.get_aws_owner_id(profile)
             for region in self.regions:
                 if regions is not None and \
                         region not in regions:
                     continue
                 images = self.clients[profile][region].\
-                    describe_images()
+                    describe_images(Owners=[ownerid])
                 for image in images['Images']:
                     image['region'] = region
                     image['profile_name'] = profile
@@ -192,8 +199,16 @@ class AwsServiceEC2(object):
 
         return snapshots
 
-    def list_security_groups(self, profile_names=None, regions=None):
-        security_groups = list()
+    def list_security_groups(self,
+                             profile_names=None,
+                             regions=None,
+                             dict_type=False):
+
+        if dict_type:
+            security_groups = {}
+        else:
+            security_groups = list()
+
         for profile in self.clients.keys():
             if profile_names is not None and profile not in profile_names:
                 continue
@@ -203,16 +218,22 @@ class AwsServiceEC2(object):
 
                 client = self.clients[profile][region]
                 groups = client.describe_security_groups()
-
                 for group in groups['SecurityGroups']:
-                    groups['region'] = region
-                    groups['profile_name'] = profile
-                    security_groups.append(group)
+                    if dict_type:
+                        security_groups[group['GroupId']] = group
+                        security_groups[group['GroupId']]['region'] = region
+                        security_groups[group['GroupId']]['profile_name'] = \
+                            profile
+                    else:
+                        group['region'] = region
+                        group['profile_name'] = profile
+                        security_groups.append(group)
 
         return security_groups
 
     def list_tags(self, profile_names=None, regions=None):
-        tags = list()
+
+        tagsobj = {}
         for profile in self.clients.keys():
             if profile_names is not None and profile not in profile_names:
                 continue
@@ -223,8 +244,15 @@ class AwsServiceEC2(object):
                 tags_ = self.clients[profile][region].describe_tags()
 
                 for tag in tags_['Tags']:
-                    tag['region'] = region
-                    tag['profile_name'] = profile
-                    tags.append(tag)
+                    if tagsobj.get(tag['ResourceId'], None) is None:
+                        tagsobj[tag['ResourceId']] = {}
 
-        return tags
+                    obj = tagsobj[tag['ResourceId']]
+
+                    obj['region'] = region
+                    obj['profile_name'] = profile
+                    obj['ResourceType'] = tag['ResourceType']
+                    tagname = "tag_" + tag['Key']
+                    obj[tagname] = tag['Value']
+
+        return tagsobj

@@ -13,7 +13,8 @@ class AwsServiceAutoScaling(object):
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
-                 secret_access_key=None):
+                 secret_access_key=None,
+                 iam_role_discover=False):
         '''
         Create a autoscaling service client to one ore more environments by
         name.
@@ -35,16 +36,23 @@ class AwsServiceAutoScaling(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
-
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = {}
+            if iam_role_discover:
+                session = boto3.Session()
+                self.clients['default'] = {}
                 for region in self.regions:
-                    self.clients[profile][region] = \
-                        session.client(service,
-                                       region_name=region)
+                    self.clients['default'][region] = \
+                        session.client(service, region_name=region)
+            else:
+                awsconfig = AwsConfig()
+                profiles = awsconfig.get_profiles()
+
+                for profile in profiles:
+                    session = boto3.Session(profile_name=profile)
+                    self.clients[profile] = {}
+                    for region in self.regions:
+                        self.clients[profile][region] = \
+                            session.client(service,
+                                           region_name=region)
 
     def list_autoscaling_groups(self, profile_names=None, regions=None):
         '''
@@ -69,7 +77,6 @@ class AwsServiceAutoScaling(object):
                 groups = self.clients[profile][region].\
                     describe_auto_scaling_groups()
                 for group in groups['AutoScalingGroups']:
-                    print group['AutoScalingGroupName']
                     self.auto_scaling_groups[profile][region].append(group[
                         'AutoScalingGroupName'])
                     group['region'] = region

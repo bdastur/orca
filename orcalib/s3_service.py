@@ -2,10 +2,37 @@
 # -*- coding: utf-8 -*-
 
 import re
+import os
+import datetime
+import jinja2
+import json
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
 from orcalib.aws_config import OrcaConfig
+
+
+
+def get_absolute_path_for_file(file_name, splitdir=None):
+    '''
+    Return the filename in absolute path for any file
+    passed as relative path.
+    '''
+    base = os.path.basename(__file__)
+    if splitdir is not None:
+        splitdir = splitdir + "/" + base
+    else:
+        splitdir = base
+
+    if os.path.isabs(__file__):
+        abs_file_path = os.path.join(__file__.split(splitdir)[0],
+                                     file_name)
+    else:
+        abs_file = os.path.abspath(__file__)
+        abs_file_path = os.path.join(abs_file.split(splitdir)[0],
+                                     file_name)
+
+    return abs_file_path
 
 
 class AwsServiceS3(object):
@@ -16,7 +43,8 @@ class AwsServiceS3(object):
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
-                 secret_access_key=None):
+                 secret_access_key=None,
+                 iam_role_discover=False):
         '''
         Create a S3 service client to one ore more environments by name.
         '''
@@ -33,12 +61,16 @@ class AwsServiceS3(object):
                 aws_access_key_id=access_key_id,
                 aws_secret_access_key=secret_access_key)
         else:
-            awsconfig = AwsConfig()
-            profiles = awsconfig.get_profiles()
+            if iam_role_discover:
+                session = boto3.Session()
+                self.clients['default'] = session.client(service)
+            else:
+                awsconfig = AwsConfig()
+                profiles = awsconfig.get_profiles()
 
-            for profile in profiles:
-                session = boto3.Session(profile_name=profile)
-                self.clients[profile] = session.client(service)
+                for profile in profiles:
+                    session = boto3.Session(profile_name=profile)
+                    self.clients[profile] = session.client(service)
 
     def list_buckets(self, profile_names=None):
         '''
@@ -210,6 +242,9 @@ class AwsServiceS3(object):
                         bucket['validations']['tagresult'] = "Tags Missing: " \
                             + str(difference)
                         bucket['validations']['result'] = 'FAIL'
+                    else:
+                        bucket['validations']['tagresult'] = "All Tags Found"
+                        bucket['validations']['result'] = 'PASS'
             except KeyError:
                 bucket['validations']['result'] = 'FAIL'
                 bucket['validations']['tagresult'] = "No Tags Found"
@@ -223,6 +258,33 @@ class AwsServiceS3(object):
 
             if bucket['validations'].get('result', None) is None:
                 bucket['validations']['result'] = 'PASS'
+
+    def generate_new_s3_lifecycle_policy_document(self,
+                                                  policyobj):
+        '''
+        Generate a new S3 lifecycle policy document
+        '''
+
+        searchpath = get_absolute_path_for_file("./")
+        templatefile = "./templates/s3_lifecycle_policy.j2"
+        now = datetime.datetime.now()
+        timestamp = "%s%s" % (str(now.microsecond), str(now.second))
+
+        for rule in policyobj['rules']:
+            if rule.get('id', None):
+                rule['id'] = "rule-%s" % str(timestamp)
+
+        print "policyobj: ", policyobj
+        template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
+        env = jinja2.Environment(loader=template_loader,
+                                 trim_blocks=False,
+                                 lstrip_blocks=False)
+        template = env.get_template(templatefile)
+        data = template.render(policyobj)
+        print "data: ", data
+
+        jdata = json.loads(data)
+        return jdata
 
     def create_bucket(self, bucket_name):
         '''

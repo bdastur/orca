@@ -8,6 +8,7 @@ CLI Interface to Aws Services.
 
 '''
 
+import datetime
 import pprint
 import prettytable
 import textwrap
@@ -100,6 +101,7 @@ class S3CommandHandler(object):
         :param bucketlist: List of buckets.
 
         '''
+        now = datetime.datetime.now()
         # Setup table
         header = ["Bucket Name", "Profile", "Location",
                   "Total Objects", "Total Size", "Last Modified"]
@@ -117,8 +119,27 @@ class S3CommandHandler(object):
             objcount = bucket['object_count']
             obj_totalsize = bucket['object_size']
             lastmodified = bucket['LastModified']
+            if lastmodified == 0:
+                lastmodifiedstr = "Bucket never used"
+            else:
+                months = now.month - lastmodified.month
+                days = now.day - lastmodified.day
+                minutes = now.minute - lastmodified.minute
+                lastmodifiedstr = ""
+                if months > 0:
+                    lastmodifiedstr = lastmodifiedstr + \
+                        str(months) + " months, "
+                if days > 0:
+                    lastmodifiedstr = lastmodifiedstr + \
+                        str(days) + " days, "
+                if minutes > 0:
+                    lastmodifiedstr = lastmodifiedstr + \
+                        str(minutes) + " minutes"
+                if months <= 0 and days <= 0 and minutes <= 0:
+                    lastmodifiedstr = "Bucket Just Modified"
+
             row = [name, profile, location,
-                   objcount, obj_totalsize, lastmodified]
+                   objcount, obj_totalsize, lastmodifiedstr]
             table.add_row(row)
 
             total_buckets += 1

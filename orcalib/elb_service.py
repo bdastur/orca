@@ -1,23 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import boto3
-from aws_config import AwsConfig
-from aws_config import OrcaConfig
+from orcalib.aws_config import AwsConfig
+from orcalib.aws_config import OrcaConfig
 
 
-class AwsServiceAppAutoscaling(object):
+class AwsServiceELB(object):
     '''
     The class provides a simpler abstraction to the AWS boto3
-    Autoscaling client interface
+    ELB client interface
     '''
     def __init__(self,
                  profile_names=None,
                  access_key_id=None,
                  secret_access_key=None,
                  iam_role_discover=False):
-        """
-        Create a Autoscaling service client to one ore more environments
-        by name.
-        """
-        service = 'application-autoscaling'
+        '''
+        Create a ELB service client to one ore more environments by name.
+        '''
+        service = 'elb'
 
         orca_config = OrcaConfig()
         self.regions = orca_config.get_regions()
@@ -40,8 +42,8 @@ class AwsServiceAppAutoscaling(object):
                     self.clients['default'][region] = \
                         session.client(service, region_name=region)
             else:
-                awsconfig = AwsConfig()
-                profiles = awsconfig.get_profiles()
+                self.awsconfig = AwsConfig()
+                profiles = self.awsconfig.get_profiles()
 
                 for profile in profiles:
                     session = boto3.Session(profile_name=profile)
@@ -50,27 +52,24 @@ class AwsServiceAppAutoscaling(object):
                         self.clients[profile][region] = \
                             session.client(service, region_name=region)
 
-    def list_scaling_policies(self, service, profile_names=None, regions=None):
-        """List Application scaling policies.
-
-        :param service: AWS Service Namespace (ec2, etc.)
-
-        """
-        scaling_policies = list()
+    def list_elbs(self, profile_names=None, regions=None):
+        '''
+        Return all the Elastic Loadbalancers.
+        '''
+        elb_list = []
         for profile in self.clients.keys():
-            if profile_names is not None and profile not in profile_names:
+            if profile_names is not None and \
+                    profile not in profile_names:
                 continue
             for region in self.regions:
-                if regions is not None and region not in regions:
+                if regions is not None and \
+                        region not in regions:
                     continue
+                elbs = self.clients[profile][region].describe_load_balancers()
+                for elb in elbs['LoadBalancerDescriptions']:
+                    elb['region'] = region
+                    elb['profile_name'] = profile
+                    elb_list.append(elb)
 
-                client = self.clients[profile][region]
-                policies = client.describe_scaling_policies(
-                    ServiceNamespace=service)
+        return elb_list
 
-                for policy in policies['ScalingPolicies']:
-                    policy['region'] = region
-                    policy['profile_name'] = profile
-                    scaling_policies.append(policy)
-
-        return scaling_policies
