@@ -203,7 +203,7 @@ class EC2CommandHandler(object):
         '''
         print "Sec groups table"
         header = ["Group Id", "Group Name", "Zone", "Account",
-                  "Instances", "ELBs"]
+                  "Instances", "ELBs", "Network Interfaces", "Intf Names"]
         table = prettytable.PrettyTable(header)
         table.align["Instances"] = "l"
 
@@ -223,7 +223,15 @@ class EC2CommandHandler(object):
             except KeyError:
                 elbs = 0
 
-            row = [group_id, group_name, zone, account, instances, elbs]
+            try:
+                nwintfs = len(obj['nwintf_list'])
+                nwintf_names = obj['nwintf_list']
+            except KeyError:
+                nwintfs = 0
+                nwintf_names = "NA"
+
+            row = [group_id, group_name, zone, account, instances,
+                   elbs, nwintfs, nwintf_names]
             table.add_row(row)
 
         print table
@@ -236,6 +244,7 @@ class EC2CommandHandler(object):
         elb_client = aws_service.AwsService('elb')
         vmlist = ec2_client.service.list_vms()
         elbs = elb_client.service.list_elbs()
+        nw_interfaces = ec2_client.service.list_network_interfaces()
         secgroups = ec2_client.service.list_security_groups(dict_type=True)
 
 
@@ -252,20 +261,73 @@ class EC2CommandHandler(object):
 
         for elb in elbs:
             elb_name = elb['LoadBalancerName']
-            print "elb name: ", elb_name
             elb_secgroups = elb['SecurityGroups']
             for elb_secgroup in elb_secgroups:
-                print "elb_secgroup: ", elb_secgroup
                 if secgroups[elb_secgroup].get('elb_list', None) is None:
                     secgroups[elb_secgroup]['elb_list'] = []
 
                 secgroups[elb_secgroup]['elb_list'].append(elb_name)
+
+        for nwintf in nw_interfaces:
+            nwintf_id = nwintf['NetworkInterfaceId']
+            nwintf_secgroups = nwintf['Groups']
+            for nwintf_secgroup in nwintf_secgroups:
+                group_id = nwintf_secgroup['GroupId']
+                if secgroups[group_id].get('nwintf_list', None) is None:
+                    secgroups[group_id]['nwintf_list'] = []
+
+                secgroups[group_id]['nwintf_list'].append(nwintf_id)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
             pprinter.pprint(secgroups)
         else:
             self.display_ec2_sec_groups_table(secgroups)
+
+    def display_ec2_nw_interfaces_table(self, nw_interfaces):
+        '''
+        Display Nw interfaces in tabular format.
+        '''
+        header = ["Interface Id", "Description", "Status",
+                  "Attachment-Status", "Attachment-ID", "Account", "Zone"]
+        table = prettytable.PrettyTable(header)
+        table.align["Description"] = "l"
+
+        for nw_interface in nw_interfaces:
+            intf_id = nw_interface['NetworkInterfaceId']
+            intf_description = nw_interface['Description']
+            intf_status = nw_interface['Status']
+            intf_account = nw_interface['profile_name']
+            intf_zone = nw_interface['region']
+
+            if nw_interface.get('Attachment', None) is None:
+                intf_attach_status = "NA"
+                intf_attach_id = "NA"
+            else:
+                intf_attach_status = nw_interface['Attachment']['Status']
+                intf_attach_id = nw_interface['Attachment']['InstanceOwnerId']
+                if intf_attach_id == nw_interface['OwnerId']:
+                    intf_attach_id = nw_interface['Attachment']['InstanceId']
+
+            row = [intf_id, intf_description, intf_status, intf_attach_status,
+                   intf_attach_id, intf_account, intf_zone]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_nw_interfaces(self, outputformat="json"):
+        '''
+        Display network interfaces
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        nw_interfaces = ec2_client.service.list_network_interfaces()
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(nw_interfaces)
+        else:
+            self.display_ec2_nw_interfaces_table(nw_interfaces)
+
 
 
 

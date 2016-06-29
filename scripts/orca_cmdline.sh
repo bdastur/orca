@@ -3,7 +3,7 @@
 services="ec2 iam s3"
 s3_operations="create-bucket delete-bucket list-buckets list-summary list-validations create-lifecycle-policy"
 iam_operations="create-user delete-user grant-access revoke-access list-policies list-users list-user-permissions"
-ec2_operations="list-vms list-summary list-tags list-secgroups"
+ec2_operations="list-vms list-summary list-tags list-secgroups list-nwinterfaces"
 
 
 ################################################

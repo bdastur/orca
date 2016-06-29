@@ -946,4 +946,25 @@ END
 
 }
 
+function ec2_list_nw_interfaces()
+{
+    outputformat=$1
+
+    if [[ -z $outputformat ]]; then
+        outputformat="table"
+    fi    
+
+    echo "List Security groups"
+    python - << END
+from cliclient.ec2_commandhelper import EC2CommandHandler
+
+
+ec2cmdhandler = EC2CommandHandler()
+ec2cmdhandler.display_ec2_nw_interfaces(outputformat="${outputformat}")
+
+END
+
+}
+
+
 

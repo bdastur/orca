@@ -108,9 +108,7 @@ class AwsServiceEC2(object):
         return vm_list
 
     def list_network_interfaces(self, profile_names=None, regions=None):
-
         '''
-
         :param profile_names: List of Strings
         :param regions: List of profiles
         :return:

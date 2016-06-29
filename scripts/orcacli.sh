@@ -380,6 +380,8 @@ elif [[ $operation = "list-tags" ]]; then
     ec2_list_tags $outputformat
 elif [[ $operation = "list-secgroups" ]]; then
     ec2_list_sec_groups $outputformat
+elif [[ $operation = "list-nwinterfaces" ]]; then
+    ec2_list_nw_interfaces $outputformat
 fi
 
 #Log End msg.

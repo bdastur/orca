@@ -210,6 +210,16 @@ class AwsServiceUt(unittest.TestCase):
         for secgroup in secgroups.keys():
             print "Security group: ", secgroup, secgroups[secgroup]
 
+    def test_list_network_interfaces(self):
+        print "Test ec2 api list_network_interfaces"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        nwinterfaces = ec2_client.service.list_network_interfaces()
+        for nwintf in nwinterfaces:
+            print "NW Interface: ", nwintf
+
+
     # ELB testcases.
     def test_list_elbs(self):
         print "Test api to list elbs"
