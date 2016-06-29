@@ -177,7 +177,20 @@ class AwsServiceUt(unittest.TestCase):
 
         vmlist = service_client.service.list_vms()
         for vm in vmlist:
-            print "VM: ", vm
+            print "VM: "
+            if len(vm['Instances']) > 1:
+                print "More than once Instancs: ", len(vm['Instances'])
+
+            for instance in vm['Instances']:
+                print "instance info: ", instance
+                try:
+                    print "Public ip: ", instance['PublicIpAddress']
+                except KeyError:
+                    print "No public ip"
+                try:
+                    print "Private IP:",  instance['PrivateIpAddress']
+                except KeyError:
+                    print "No private ip"
 
     def test_list_tags(self):
         print "Test ec2 list_tags API"

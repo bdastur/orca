@@ -103,28 +103,40 @@ class EC2CommandHandler(object):
         table = prettytable.PrettyTable(header)
 
         for vm in vmlist:
-            for i in range (len(vm['Instances'])):
-                instance_id = vm['Instances'][i]['InstanceId']
-                instance_type = vm['Instances'][i]['InstanceType']
-                if 'KeyName' in vm['Instances'][i]:
-                    key_name = vm['Instances'][i]['KeyName']
+            for instance in vm['Instances']:
+                instance_id = instance['InstanceId']
+                instance_type = instance['InstanceType']
+                try:
+                    key_name = instance['KeyName']
+                except KeyError:
+                    key_name = "N/A"
 
-                if 'VpcId' in vm['Instances'][i]:
-                    vpc_id = vm['Instances'][i]['VpcId']
-                if 'Placement' in vm['Instances'][i]:
-                    zone = vm['Instances'][i]['Placement']['AvailabilityZone']
+                try:
+                    vpc_id = instance['VpcId']
+                except KeyError:
+                    vpc_id = "NA"
 
-                for j in range (len(vm['Instances'][i]['NetworkInterfaces'])):
-                    if 'Association' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        public_dnsname = vm['Instances'][i]['NetworkInterfaces'][j]['Association']['PublicDnsName']
-                        public_ip = vm['Instances'][i]['NetworkInterfaces'][j]['Association']['PublicIp']
-                    if 'PrivateDnsName' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        private_dnsname = vm['Instances'][i]['NetworkInterfaces'][j]['PrivateDnsName']
-                    if 'PrivateIPAddress' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        private_ip = vm['Instances'][i]['NetworkInterfaces'][j]['PrivateIpAddress']
+                zone = instance['Placement']['AvailabilityZone']
+                public_dnsname = instance['PublicDnsName']
+                if len(public_dnsname) == 0:
+                    public_dnsname = "NA"
 
-                    row = [instance_id, instance_type, key_name, public_dnsname, public_ip, private_dnsname, private_ip, vpc_id, zone]
-                    table.add_row(row)
+                try:
+                    public_ip = instance['PublicIpAddress']
+                except KeyError:
+                    public_ip = "NA"
+
+                private_dnsname = instance['PrivateDnsName']
+                try:
+                    private_ip = instance['PrivateIpAddress']
+                except KeyError:
+                    private_ip = "NA"
+
+                row = [instance_id, instance_type, key_name,
+                       public_dnsname, public_ip, private_dnsname,
+                       private_ip, vpc_id, zone]
+                table.add_row(row)
+
         print table
 
     def display_ec2_vmlist(self, outputformat='json'):
