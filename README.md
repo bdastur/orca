@@ -1,4 +1,4 @@
 # orca
 ---------
 
-AWS Tools and Utilities for Operational Simplification.
+AWS Tools and Utilities for Operational Simplification..
