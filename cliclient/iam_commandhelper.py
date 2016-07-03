@@ -80,61 +80,58 @@ class IAMCommandHandler(object):
         else:
             self.display_iam_userlist_table(userlist)
 
+    def fillstr(self,
+                string,
+                length):
+        '''
+        Cap a string to the lenght.
+        '''
+        if len(string) < length:
+            diff = length - len(string)
+            string = string + " " * diff
+        else:
+            mod = len(string) % length
+            string = string + " " * mod
+
+        return string
 
     def display_iam_user_permissions_table(self,
                                            user_name,
-                                           prof_permissions):
+                                           profile_perms):
+        '''
+        Display tabular format
+        '''
+        table = prettytable.PrettyTable()
+        table.add_column("User Name", [user_name])
 
-        # Setup table.
-        header = ["User Name"]
-        for profile in prof_permissions.keys():
-            header.append(profile)
+        for profile in profile_perms.keys():
+            if profile_perms[profile] is None:
+                continue
 
-        table = prettytable.PrettyTable(header)
+            statementstr = ""
+            for statement in profile_perms[profile]:
+                resources = statement['Resource']
+                actions = statement.get('Action', None)
+                if not actions:
+                    actions = statement.get('NotAction', None)
+                effect = statement['Effect']
 
-        table.align["User Name"] = "l"
-        for profile in prof_permissions.keys():
-            table.align[profile] = "l"
+                #statementstr = statementstr + "-" * 29 + "\n"
 
+                tempstr = "Resources: " + str(resources)
+                statementstr = statementstr + self.fillstr(tempstr, 30)
 
-        count = 0
-        done_flag = False
-        while not done_flag:
-            done_flag = True
-            row = []
-            row.append(user_name)
-            for profile in prof_permissions.keys():
-                perm_info = prof_permissions[profile]
-                if perm_info is None:
-                    row.append("------- NA --------")
-                    continue
-                try:
-                    obj = prof_permissions[profile][count]
-                    perm_str = "Actions:" + " "*25
-                    try:
-                        for action in obj['Action']:
-                            perm_str += action + ", "
-                    except KeyError:
-                        for action in obj['NotAction']:
-                            perm_str += "Not: " + action + ","
+                tempstr = "Actions: " + \
+                    str(actions)
+                statementstr = statementstr + self.fillstr(tempstr, 30)
 
-                    perm_str += "Resources:" + " " * 20
-                    for resource in obj['Resource']:
-                        perm_str += resource + ", " + "\n"
+                tempstr = "Effect: " + \
+                    str(effect)
+                statementstr = statementstr + self.fillstr(tempstr, 30)
+                statementstr = statementstr + "-" * 29 + "\n"
 
-                    perm_str += "Effect: " + obj['Effect']
-
-                    perm_str = textwrap.fill(perm_str, 35)
-
-                    row.append(perm_str)
-                    done_flag = False
-                except IndexError:
-                    row.append("------- NA --------")
-                    continue
-            table.add_row(row)
-
-            count += 1
-
+            statementstr = textwrap.fill(statementstr, 34)
+            table.add_column(profile, [statementstr], align="l")
 
         print table
 
@@ -162,4 +159,62 @@ class IAMCommandHandler(object):
         if outputformat == "table":
             self.display_iam_user_permissions_table(user_name,
                                                     profile_perms)
+
+    def display_iam_user_policies_table(self,
+                                        user_name,
+                                        policyinfo):
+        '''
+        Display user policy info in tabular format
+        '''
+        table = prettytable.PrettyTable()
+        table.add_column("User Name", [user_name])
+
+        for profile in policyinfo.keys():
+
+            if policyinfo[profile] is None:
+                continue
+
+            policystr = ""
+            for policy in policyinfo[profile]:
+                policyname = policy['PolicyName']
+                policy_type = policy['type']
+
+                tempstr = "Name: " + policyname
+                policystr = policystr + self.fillstr(tempstr, 30)
+                tempstr = "Type: " + policy_type
+                policystr = policystr + self.fillstr(tempstr, 30)
+
+            policystr = textwrap.fill(policystr, 34)
+            table.add_column(profile, [policystr], align="l")
+
+        print table
+
+    def display_iam_user_policies(self,
+                                  user_name,
+                                  outputformat='json'):
+        '''
+        Display policies attached to the user.
+        '''
+
+        awsconfig = aws_config.AwsConfig()
+        profiles = awsconfig.get_profiles()
+
+        service_client = aws_service.AwsService('iam')
+
+        policyinfo = {}
+        for profile in profiles:
+            policyinfo[profile] = []
+            policies = service_client.service.get_user_attached_policies(
+                UserName=user_name,
+                profile_name=profile)
+            policyinfo[profile] = policies
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(policyinfo)
+
+        if outputformat == "table":
+            self.display_iam_user_policies_table(user_name,
+                                                 policyinfo)
+
 

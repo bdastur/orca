@@ -36,6 +36,10 @@ outputformat=
 resource_actions=
 resource_type=
 resource_names=
+prefix=
+expiration_duration=
+ia_transition_duration=
+glacer_transition_duration=
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -151,11 +155,23 @@ function show_help()
     echo ""
     echo "-b bucket    : Specify the bucket name to create."
     echo ""
-    echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group."
+    if [[ $operation = "create-lifecycle-policy" ]]; then
+        echo "-g glacier Transition duration: [Required] Duration after which older version objects will be moved to glacier storage"
+    else
+        echo "-g groupname : [OPTIONAL] If a group name is provided the user will be added to the specified group"
+    fi
     echo ""
     echo "-f password  : [OPTIONAL] Instead of randomly generated password. Force the password from CLI"
     echo ""
-    echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
+    if [[ $operation = "create-lifecycle-policy" ]]; then 
+        echo "-e Expiration duration: [Required] Specify time (in days) after which objects within prefix can be deleted"
+        echo ""
+        echo "-i IA Transition duration: [Required] Duration after which older version objects will be moved to Infrequent Access Storage"
+        echo ""
+        echo "-p prefix  : [Required] Prefix/ to apply the lifecycle policy to"
+    else
+        echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
+    fi
     echo ""
     echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
     echo ""
@@ -256,6 +272,10 @@ operation=$1
 validate_operation_type $service_type $operation
 shift
 
+if [[ $operation = "create-lifecycle-policy" ]]; then
+    CMD_OPTIONS="${CMD_OPTIONS}e:i:p:"
+fi
+
 
 while getopts ${CMD_OPTIONS} option; do
     case $option in
@@ -274,11 +294,21 @@ while getopts ${CMD_OPTIONS} option; do
         d)
             debug=true
             ;;
+        e)
+            expiration_duration=$OPTARG
+            ;;
         f)
             force_password=$OPTARG
             ;;
         g)
-            group=$OPTARG
+            if [[ $operation = "create-lifecycle-policy" ]]; then
+                glacer_transition_duration=$OPTARG
+            else
+                group=$OPTARG
+            fi
+            ;;
+        i)
+            ia_transition_duration=$OPTARG
             ;;
         l)
             create_logincredentials=true
@@ -290,7 +320,11 @@ while getopts ${CMD_OPTIONS} option; do
             outputformat=$OPTARG
             ;;
         p)
-            policies=$OPTARG
+            if [[ $operation = "create-lifecycle-policy" ]]; then
+                prefix=$OPTARG
+            else
+                policies=$OPTARG
+            fi
             ;;
         r)
             delimiter=true
@@ -328,16 +362,26 @@ elif [[ $operation = "list-buckets" ]]; then
     s3_list_buckets $outputformat
 elif [[ $operation = "list-validations" ]]; then
     s3_list_validations $outputformat
+elif [[ $operation = "create-lifecycle-policy" ]]; then
+    s3_create_lifecycle_policy $prefix $expiration_duration $ia_transition_duration $glacer_transition_duration
 elif [[ $operation = "create-user" ]]; then
     create_user_account
 elif [[ $operation = "list-users" ]]; then
     iam_list_users $outputformat
 elif [[ $operation = "list-user-permissions" ]]; then
     iam_list_user_permissions $user $outputformat
+elif [[ $operation = "list-policies" ]]; then
+    iam_list_user_policies $user $outputformat
 elif [[ $operation = "grant-access" ]]; then
     grant_access_to_resource
 elif [[ $operation = "list-vms" ]]; then
     ec2_list_vms $outputformat
+elif [[ $operation = "list-tags" ]]; then
+    ec2_list_tags $outputformat
+elif [[ $operation = "list-secgroups" ]]; then
+    ec2_list_sec_groups $outputformat
+elif [[ $operation = "list-nwinterfaces" ]]; then
+    ec2_list_nw_interfaces $outputformat
 fi
 
 #Log End msg.
