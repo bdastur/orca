@@ -15,7 +15,6 @@ regions:
 
 tagset:
   - ApplicationRole
-  - Name
   - Cluster
   - Environment
   - OwnerEmail

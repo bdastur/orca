@@ -89,6 +89,28 @@ class AwsServiceUt(unittest.TestCase):
         regions = service_client.get_regions()
         print regions
 
+    def test_generate_new_s3_lifecycle_policy_document(self):
+        print "Test generate_new_s3_lifecycle_policy_document API"
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service.clients is not None)
+
+        rule_obj = {}
+        rule_obj['prefix'] = "TESTFOLDER/*"
+        rule_obj['status'] = "Enabled"
+        rule_obj['expire_duration'] = 500
+        rule_obj['standard_ia_transition_duration'] = 45
+        rule_obj['glacier_transition_duration'] = 60
+        rules = []
+        rules.append(rule_obj)
+        policyobj = {}
+        policyobj['rules'] = rules
+
+        policydoc = \
+            service_client.service.\
+            generate_new_s3_lifecycle_policy_document(policyobj)
+        print "Policy doc: ", policydoc
+
+
     # IAM testcases.
     def test_list_users(self):
         print "Test the iam api to list users"
@@ -155,8 +177,58 @@ class AwsServiceUt(unittest.TestCase):
 
         vmlist = service_client.service.list_vms()
         for vm in vmlist:
-            print "VM: ", vm
+            print "VM: "
+            if len(vm['Instances']) > 1:
+                print "More than once Instancs: ", len(vm['Instances'])
 
+            for instance in vm['Instances']:
+                print "instance info: ", instance
+                try:
+                    print "Public ip: ", instance['PublicIpAddress']
+                except KeyError:
+                    print "No public ip"
+                try:
+                    print "Private IP:",  instance['PrivateIpAddress']
+                except KeyError:
+                    print "No private ip"
+
+    def test_list_tags(self):
+        print "Test ec2 list_tags API"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        tagsobj = ec2_client.service.list_tags()
+        for obj in tagsobj.keys():
+            print "OBJ: ", tagsobj[obj]
+
+    def test_list_security_groups(self):
+        print "Test ec2 api list security groups"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        secgroups = ec2_client.service.list_security_groups(dict_type=True)
+        for secgroup in secgroups.keys():
+            print "Security group: ", secgroup, secgroups[secgroup]
+
+    def test_list_network_interfaces(self):
+        print "Test ec2 api list_network_interfaces"
+        ec2_client = aws_service.AwsService('ec2')
+        self.failUnless(ec2_client.service.clients is not None)
+
+        nwinterfaces = ec2_client.service.list_network_interfaces()
+        for nwintf in nwinterfaces:
+            print "NW Interface: ", nwintf
+
+
+    # ELB testcases.
+    def test_list_elbs(self):
+        print "Test api to list elbs"
+        elbclient = aws_service.AwsService('elb')
+        self.failUnless(elbclient.service.clients is not None)
+
+        elbs = elbclient.service.list_elbs()
+        for elb in elbs:
+            print "ELB: ", elb
 
 
 

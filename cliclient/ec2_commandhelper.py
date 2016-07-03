@@ -98,33 +98,47 @@ class EC2CommandHandler(object):
 
         # Setup table
         header = ["Instance-Id", "InstanceType", "KeyName",
-                  "PublicDNS", "PublicIP", "PrivateDNS", "PrivateIP", 'VpcId', 'Zone']
+                  "PublicDNS", "PublicIP", "PrivateDNS",
+                  "PrivateIP", "VpcId", "Zone", "Account"]
 
         table = prettytable.PrettyTable(header)
 
         for vm in vmlist:
-            for i in range (len(vm['Instances'])):
-                instance_id = vm['Instances'][i]['InstanceId']
-                instance_type = vm['Instances'][i]['InstanceType']
-                if 'KeyName' in vm['Instances'][i]:
-                    key_name = vm['Instances'][i]['KeyName']
+            profile = vm['profile_name']
+            for instance in vm['Instances']:
+                instance_id = instance['InstanceId']
+                instance_type = instance['InstanceType']
+                try:
+                    key_name = instance['KeyName']
+                except KeyError:
+                    key_name = "N/A"
 
-                if 'VpcId' in vm['Instances'][i]:
-                    vpc_id = vm['Instances'][i]['VpcId']
-                if 'Placement' in vm['Instances'][i]:
-                    zone = vm['Instances'][i]['Placement']['AvailabilityZone']
+                try:
+                    vpc_id = instance['VpcId']
+                except KeyError:
+                    vpc_id = "NA"
 
-                for j in range (len(vm['Instances'][i]['NetworkInterfaces'])):
-                    if 'Association' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        public_dnsname = vm['Instances'][i]['NetworkInterfaces'][j]['Association']['PublicDnsName']
-                        public_ip = vm['Instances'][i]['NetworkInterfaces'][j]['Association']['PublicIp']
-                    if 'PrivateDnsName' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        private_dnsname = vm['Instances'][i]['NetworkInterfaces'][j]['PrivateDnsName']
-                    if 'PrivateIPAddress' in vm['Instances'][i]['NetworkInterfaces'][j]:
-                        private_ip = vm['Instances'][i]['NetworkInterfaces'][j]['PrivateIpAddress']
+                zone = instance['Placement']['AvailabilityZone']
+                public_dnsname = instance['PublicDnsName']
+                if len(public_dnsname) == 0:
+                    public_dnsname = "NA"
 
-                    row = [instance_id, instance_type, key_name, public_dnsname, public_ip, private_dnsname, private_ip, vpc_id, zone]
-                    table.add_row(row)
+                try:
+                    public_ip = instance['PublicIpAddress']
+                except KeyError:
+                    public_ip = "NA"
+
+                private_dnsname = instance['PrivateDnsName']
+                try:
+                    private_ip = instance['PrivateIpAddress']
+                except KeyError:
+                    private_ip = "NA"
+
+                row = [instance_id, instance_type, key_name,
+                       public_dnsname, public_ip, private_dnsname,
+                       private_ip, vpc_id, zone, profile]
+                table.add_row(row)
+
         print table
 
     def display_ec2_vmlist(self, outputformat='json'):
@@ -139,6 +153,185 @@ class EC2CommandHandler(object):
             pprinter.pprint(vmlist)
         else:
             self.display_ec2_vmlist_table(vmlist)
+
+    def display_ec2_tags_table(self, tagsobj):
+        '''
+        Display List of tags in tabular format
+        '''
+        header = ["Resource Id", "Resource Type", "Profile", "Tags"]
+        table = prettytable.PrettyTable(header)
+        table.align['Tags'] = "l"
+
+        for resid in tagsobj.keys():
+            resource_id = resid
+
+            obj = tagsobj[resid]
+            keys = obj.keys()
+            resource_type = obj['ResourceType']
+            profile_name = obj['profile_name']
+
+            tags_str = ""
+            for key in keys:
+                if key.startswith('tag_'):
+                    tagname = key.split("tag_")[1]
+                    tags_str = tags_str + tagname + ": " + obj[key] + "\n"
+
+
+            row = [resource_id, resource_type, profile_name, tags_str]
+            table.add_row(row)
+
+            row = ["-"*20, "-"*20, "-"*20, "-"*50]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_tags(self, outputformat='json'):
+        '''
+        Display Tags for all EC2 Resources
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        tagsobj = ec2_client.service.list_tags()
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(tagsobj)
+        else:
+            self.display_ec2_tags_table(tagsobj)
+
+    def display_ec2_sec_groups_table(self, secgroups):
+        '''
+        Display security groups in tabular format
+        '''
+        print "Sec groups table"
+        header = ["Group Id", "Group Name", "Zone", "Account",
+                  "Instances", "ELBs", "Network Interfaces", "Intf Names"]
+        table = prettytable.PrettyTable(header)
+        table.align["Instances"] = "l"
+
+        for secgroup in secgroups.keys():
+            group_id = secgroup
+
+            obj = secgroups[secgroup]
+            group_name = obj['GroupName']
+            zone = obj['region']
+            account = obj['profile_name']
+            try:
+                instances = len(obj['vm_list'])
+            except KeyError:
+                instances = 0
+            try:
+                elbs = len(obj['elb_list'])
+            except KeyError:
+                elbs = 0
+
+            try:
+                nwintfs = len(obj['nwintf_list'])
+                nwintf_names = obj['nwintf_list']
+            except KeyError:
+                nwintfs = 0
+                nwintf_names = "NA"
+
+            row = [group_id, group_name, zone, account, instances,
+                   elbs, nwintfs, nwintf_names]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_sec_groups(self, outputformat="json"):
+        '''
+        Display security groups
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        elb_client = aws_service.AwsService('elb')
+        vmlist = ec2_client.service.list_vms()
+        elbs = elb_client.service.list_elbs()
+        nw_interfaces = ec2_client.service.list_network_interfaces()
+        secgroups = ec2_client.service.list_security_groups(dict_type=True)
+
+
+        for vm in vmlist:
+            for instance in vm['Instances']:
+                instance_id = instance['InstanceId']
+                vm_secgroups = instance['SecurityGroups']
+                for vm_secgroup in vm_secgroups:
+                    group_id = vm_secgroup['GroupId']
+                    if secgroups[group_id].get('vm_list', None) is None:
+                        secgroups[group_id]['vm_list'] = []
+
+                    secgroups[group_id]['vm_list'].append(instance_id)
+
+        for elb in elbs:
+            elb_name = elb['LoadBalancerName']
+            elb_secgroups = elb['SecurityGroups']
+            for elb_secgroup in elb_secgroups:
+                if secgroups[elb_secgroup].get('elb_list', None) is None:
+                    secgroups[elb_secgroup]['elb_list'] = []
+
+                secgroups[elb_secgroup]['elb_list'].append(elb_name)
+
+        for nwintf in nw_interfaces:
+            nwintf_id = nwintf['NetworkInterfaceId']
+            nwintf_secgroups = nwintf['Groups']
+            for nwintf_secgroup in nwintf_secgroups:
+                group_id = nwintf_secgroup['GroupId']
+                if secgroups[group_id].get('nwintf_list', None) is None:
+                    secgroups[group_id]['nwintf_list'] = []
+
+                secgroups[group_id]['nwintf_list'].append(nwintf_id)
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(secgroups)
+        else:
+            self.display_ec2_sec_groups_table(secgroups)
+
+    def display_ec2_nw_interfaces_table(self, nw_interfaces):
+        '''
+        Display Nw interfaces in tabular format.
+        '''
+        header = ["Interface Id", "Description", "Status",
+                  "Attachment-Status", "Attachment-ID", "Account", "Zone"]
+        table = prettytable.PrettyTable(header)
+        table.align["Description"] = "l"
+
+        for nw_interface in nw_interfaces:
+            intf_id = nw_interface['NetworkInterfaceId']
+            intf_description = nw_interface['Description']
+            intf_status = nw_interface['Status']
+            intf_account = nw_interface['profile_name']
+            intf_zone = nw_interface['region']
+
+            if nw_interface.get('Attachment', None) is None:
+                intf_attach_status = "NA"
+                intf_attach_id = "NA"
+            else:
+                intf_attach_status = nw_interface['Attachment']['Status']
+                intf_attach_id = nw_interface['Attachment']['InstanceOwnerId']
+                if intf_attach_id == nw_interface['OwnerId']:
+                    intf_attach_id = nw_interface['Attachment']['InstanceId']
+
+            row = [intf_id, intf_description, intf_status, intf_attach_status,
+                   intf_attach_id, intf_account, intf_zone]
+            table.add_row(row)
+
+        print table
+
+    def display_ec2_nw_interfaces(self, outputformat="json"):
+        '''
+        Display network interfaces
+        '''
+        ec2_client = aws_service.AwsService('ec2')
+        nw_interfaces = ec2_client.service.list_network_interfaces()
+
+        if outputformat == "json":
+            pprinter = pprint.PrettyPrinter()
+            pprinter.pprint(nw_interfaces)
+        else:
+            self.display_ec2_nw_interfaces_table(nw_interfaces)
+
+
+
+
+
 
 
 
