@@ -6,6 +6,7 @@ import os
 import datetime
 import jinja2
 import json
+import multiprocessing as mp
 import boto3
 import botocore
 from orcalib.aws_config import AwsConfig
@@ -72,7 +73,36 @@ class AwsServiceS3(object):
                     session = boto3.Session(profile_name=profile)
                     self.clients[profile] = session.client(service)
 
-    def list_buckets(self, profile_names=None):
+    def list_buckets_fast(self):
+        buckets = []
+        jobs = []
+        for profile in self.clients.keys():
+            queue = mp.Queue()
+            kwargs = {'profile_names': profile,
+                      'queue': queue}
+
+            process = mp.Process(target=self.list_buckets,
+                                 kwargs=kwargs)
+            process.start()
+            jobs.append((process, queue))
+
+        count = 0
+        for job in jobs:
+            process = job[0]
+            queue = job[1]
+            process.join()
+            profile_buckets = queue.get()
+            buckets.extend(profile_buckets)
+            count += 1
+
+        for job in jobs:
+            process = job[0]
+            if process.is_alive():
+                process.terminate()
+
+        return buckets
+
+    def list_buckets(self, profile_names=None, queue=None):
         '''
         Return all the buckets.
 
@@ -110,24 +140,75 @@ class AwsServiceS3(object):
                     bucket['profile_name'].append(profile)
                     bucketlist.append(bucket)
                 #bucketlist.append(bucket)
+
+        if queue is not None:
+            queue.put(bucketlist)
+
         return bucketlist
 
-    def populate_bucket_location(self, bucketlist):
+    def populate_bucket_fast(self, oper, bucketlist):
+        '''
+        Multiprocess API to populate bucket info
+        '''
+        batch_size = 10
+        jobs = []
+
+        for count in range(0, len(bucketlist), batch_size):
+            if oper == "location":
+                api = self.populate_bucket_location
+            elif oper == "policy":
+                api = self.populate_bucket_policy
+            elif oper == "objects":
+                api = self.populate_bucket_objects
+            elif oper == "tagging":
+                api = self.populate_bucket_tagging
+            elif oper == "validation":
+                api = self.populate_bucket_validation
+            else:
+                api = None
+                print "Invalid operation"
+                return
+            queue = mp.Queue()
+            kwargs = {'queue': queue}
+            process = mp.Process(target=api,
+                                 args=(bucketlist[count:count + batch_size],),
+                                 kwargs=kwargs)
+            process.start()
+            jobs.append((process, queue))
+
+        newbucketlist = []
+        for job in jobs:
+            process = job[0]
+            queue = job[1]
+            templist = queue.get()
+            newbucketlist.extend(templist)
+            process.join()
+
+        for job in jobs:
+            if job[0].is_alive():
+                job[0].terminate()
+
+        return newbucketlist
+
+    def populate_bucket_location(self, bucketlist, queue=None):
         '''
         Update the bucket information with bucket location.
 
         :type bucketlist: List of bucket (list of dictionaries)
         :param bucketlist: List of buckets
-
         '''
-
+        newlist = []
         for bucket in bucketlist:
             profile = bucket['profile_name'][0]
             locationdata = self.clients[profile].get_bucket_location(
                 Bucket=bucket['Name'])
             bucket['LocationConstraint'] = locationdata['LocationConstraint']
 
-    def populate_bucket_policy(self, bucketlist):
+        if queue:
+            newlist = bucketlist
+            queue.put(newlist)
+
+    def populate_bucket_policy(self, bucketlist, queue=None):
         '''
         Update the bucket information with bucket policy.
 
@@ -145,7 +226,10 @@ class AwsServiceS3(object):
             except botocore.exceptions.ClientError:
                 bucket['Policy'] = None
 
-    def populate_bucket_objects(self, bucketlist):
+        if queue:
+            queue.put(bucketlist)
+
+    def populate_bucket_objects(self, bucketlist, queue=None):
         '''
         Update the buckets information with list of objects.
 
@@ -153,7 +237,6 @@ class AwsServiceS3(object):
         :param bucketlist: List of buckets
 
         '''
-
         for bucket in bucketlist:
             profile = bucket['profile_name'][0]
             objectdata = self.clients[profile].list_objects(
@@ -189,7 +272,10 @@ class AwsServiceS3(object):
             bucket['object_size'] = objsize
             bucket['LastModified'] = lastmodified
 
-    def populate_bucket_tagging(self, bucketlist):
+        if queue:
+            queue.put(bucketlist)
+
+    def populate_bucket_tagging(self, bucketlist, queue=None):
         '''
         Update the buckets information with tagging info.
 
@@ -209,7 +295,10 @@ class AwsServiceS3(object):
 
             bucket['TagSet'] = tagdata['TagSet']
 
-    def populate_bucket_validation(self, bucketlist):
+        if queue:
+            queue.put(bucketlist)
+
+    def populate_bucket_validation(self, bucketlist, queue=None):
         '''
         The API will validate the buckets  by looking at the
         bucket naming convention and the available tags. It will save
@@ -258,6 +347,9 @@ class AwsServiceS3(object):
 
             if bucket['validations'].get('result', None) is None:
                 bucket['validations']['result'] = 'PASS'
+
+        if queue:
+            queue.put(bucketlist)
 
     def generate_new_s3_lifecycle_policy_document(self,
                                                   policyobj):
