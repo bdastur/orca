@@ -64,10 +64,12 @@ class S3CommandHandler(object):
         '''
         service_client = aws_service.AwsService('s3')
         bucketlist = service_client.service.list_buckets()
-        service_client.service.populate_bucket_location(bucketlist)
+        #service_client.service.populate_bucket_location(bucketlist)
+        newbucketlist = service_client.service.populate_bucket_fast("location",
+                                                                    bucketlist)
 
         bucket_summary = {}
-        for bucket in bucketlist:
+        for bucket in newbucketlist:
             profile_name = bucket['profile_name'][0]
             location_constraint = bucket['LocationConstraint']
             if location_constraint is None:
@@ -165,15 +167,20 @@ class S3CommandHandler(object):
         Display the List of S3 buckets
         '''
         service_client = aws_service.AwsService('s3')
-        bucketlist = service_client.service.list_buckets()
-        service_client.service.populate_bucket_location(bucketlist)
-        service_client.service.populate_bucket_objects(bucketlist)
+        bucketlist = service_client.service.list_buckets_fast()
+        #service_client.service.populate_bucket_location(bucketlist)
+        #service_client.service.populate_bucket_objects(bucketlist)
+        newbucketlist = service_client.service.populate_bucket_fast("location",
+                                                                    bucketlist)
+        newbucketlist = service_client.service.populate_bucket_fast(
+            "objects",
+            newbucketlist)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
-            pprinter.pprint(bucketlist)
+            pprinter.pprint(newbucketlist)
         else:
-            self.display_s3_buckelist_table(bucketlist)
+            self.display_s3_buckelist_table(newbucketlist)
 
     def display_s3_bucket_validations_table(self, bucketlist):
         '''
@@ -203,14 +210,18 @@ class S3CommandHandler(object):
         '''
         s3client = aws_service.AwsService('s3')
         bucketlist = s3client.service.list_buckets()
-        s3client.service.populate_bucket_tagging(bucketlist)
-        s3client.service.populate_bucket_validation(bucketlist)
+        #s3client.service.populate_bucket_tagging(bucketlist)
+        #s3client.service.populate_bucket_validation(bucketlist)
+        newbucketlist = s3client.service.populate_bucket_fast("tagging",
+                                                              bucketlist)
+        newbucketlist = s3client.service.populate_bucket_fast("validation",
+                                                              newbucketlist)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
-            pprinter.pprint(bucketlist)
+            pprinter.pprint(newbucketlist)
         else:
-            self.display_s3_bucket_validations_table(bucketlist)
+            self.display_s3_bucket_validations_table(newbucketlist)
 
 
 
