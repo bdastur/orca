@@ -5,6 +5,7 @@
 import unittest
 import orcalib.aws_service as aws_service
 import orcalib.aws_config as aws_config
+import orcalib.utils as orcautils
 
 
 class AwsServiceUt(unittest.TestCase):
@@ -229,6 +230,59 @@ class AwsServiceUt(unittest.TestCase):
         elbs = elbclient.service.list_elbs()
         for elb in elbs:
             print "ELB: ", elb
+
+    # Filter resource.
+    def test_filter_list(self):
+        print "Test API to filter a resource"
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service is not None)
+
+        bucketlist = service_client.service.list_buckets()
+
+        filters = [
+            {'Name': 'Name',
+             'Values': ['analytics-cpe2', 'scalr-testing-bucket'],
+             },
+            {'Name': 'Name',
+             'Values': ['camilo-ebs-test1'],
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist, filters)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 2----------------"
+        filters = [
+            {'Name': 'Name',
+             'Values': ['analytics-cpe2',
+                        'aws-for-dummies',
+                        'global-s3-cpe-dev-backupservice'],
+             }
+         ]
+
+        filtered_bucketlist = orcautils.filter_list(bucketlist, filters)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 3----------------"
+        filters = [
+            {'Name': 'Name',
+             'Values': ['analytics-cpe2',
+                        'aws-for-dummies',
+                        'global-s3-cpe-dev-backupservice',
+                        'global-s3-cpe-dev-applicationsupport'],
+             },
+            {'Name': 'profile_name',
+             'Values': ['default'],
+             }
+         ]
+
+        filtered_bucketlist = orcautils.filter_list(bucketlist, filters,
+                                                    aggr_and=True)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+
 
 
 
