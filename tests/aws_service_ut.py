@@ -231,7 +231,7 @@ class AwsServiceUt(unittest.TestCase):
         for elb in elbs:
             print "ELB: ", elb
 
-    # Filter resource.
+    # Filter resource test.
     def test_filter_list(self):
         print "Test API to filter a resource"
         service_client = aws_service.AwsService('s3')
@@ -239,6 +239,8 @@ class AwsServiceUt(unittest.TestCase):
 
         bucketlist = service_client.service.list_buckets()
 
+        print "------------Filter test 1----------------"
+        print "Filter buckets with specific names"
         filters = [
             {'Name': 'Name',
              'Values': ['analytics-cpe2', 'scalr-testing-bucket'],
@@ -252,6 +254,7 @@ class AwsServiceUt(unittest.TestCase):
             print "Bucket: ", bucket
 
         print "------------test 2----------------"
+        print "Filter buckets with specific names."
         filters = [
             {'Name': 'Name',
              'Values': ['analytics-cpe2',
@@ -265,6 +268,7 @@ class AwsServiceUt(unittest.TestCase):
             print "Bucket: ", bucket
 
         print "------------test 3----------------"
+        print "Filter buckets with specific names and in specific account"
         filters = [
             {'Name': 'Name',
              'Values': ['analytics-cpe2',
@@ -279,6 +283,66 @@ class AwsServiceUt(unittest.TestCase):
 
         filtered_bucketlist = orcautils.filter_list(bucketlist, filters,
                                                     aggr_and=True)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+    def test_filter_list2(self):
+        print "Test api - check filters on buckets."
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service is not None)
+
+        bucketlist = service_client.service.list_buckets()
+        service_client.service.populate_bucket_location(bucketlist)
+        service_client.service.populate_bucket_tagging(bucketlist)
+
+        for bucket in bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 1----------------"
+        print "Filter buckets with Loc constraint us-west-1 or 2 and in" \
+            " cpeproduction"
+        filters = [
+            {'Name': 'LocationConstraint',
+             'Values': ['us-west-2']
+             },
+            {'Name': 'profile_name',
+             'Values': ['cpeproduction']
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters,
+                                                    aggr_and=True)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 2----------------"
+        print "Filter buckets with Loc const us-west-1,2 in cpeprod"
+        filters = [
+            {'Name': 'LocationConstraint',
+             'Values': ['us-west-2', 'us-west-1']
+             },
+            {'Name': 'profile_name',
+             'Values': ['cpeproduction']
+             },
+            {'Name': 'TagSet',
+             'Values': [{'Key': 'Project', 'Value': 'ICE'}]
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters,
+                                                    aggr_and=True)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 3----------------"
+        print "Filter buckets with tag project and value ice."
+        filters = [
+            {'Name': 'TagSet',
+             'Values': [{'Key': 'Project', 'Value': 'ICE'}]
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters)
         for bucket in filtered_bucketlist:
             print "Bucket: ", bucket
 
