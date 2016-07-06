@@ -79,7 +79,6 @@ def filter_list(resource_list, filters, aggr_and=False):
     for idx in filtered_idxes.keys():
         if aggr_and:
             if filtered_idxes[idx] == len(filters):
-                print "Add to list since and"
                 filtered_list.append(resource_list[idx])
         else:
             filtered_list.append(resource_list[idx])
