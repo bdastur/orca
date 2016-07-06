@@ -2,6 +2,70 @@
 # -*- coding: utf-8 -*-
 
 
+def __check_filter_match(resource_val, values):
+    '''
+    API to validate the resources against filters.
+    It returns a list of indexes and the number of successful
+    matches
+
+    :type resource_val: type (str, int, dict, list)
+    :param resource_val: Value of a matched key in the resource
+
+    :type values: list
+    :param values: a list of values to match against.
+    '''
+
+    # If the type is of 'str' or 'int'
+    if type(resource_val) == str or \
+       type(resource_val) == int:
+        if resource_val in values:
+            return True
+    if type(resource_val) == list:
+        for resval in resource_val:
+            if type(resval) == str or \
+                    type(resval) == int:
+                if resval in values:
+                    return True
+            elif type(resval) == dict:
+                print "Resource val is a dict: ", resval
+                print "values are: ", values
+                # For matching a list of dicts, the filter must have a
+                # list of dicts as well.
+                for value in values:
+                    for resitem in resval.items():
+                        for valitem in value.items():
+                            if resitem[0] == valitem[0] and \
+                                    resitem[1] == valitem[1]:
+                                print "Matched: %s %s %s %s" % \
+                                    (valitem[0], resitem[0],
+                                     valitem[1], resitem[1])
+                                return True
+                            else:
+                                print "Did not match %s %s %s %s" % \
+                                    (valitem[0], resitem[0],
+                                     valitem[1], resitem[1])
+
+                    #for key in value.keys():
+                    #    print "Key: ", key, value[key]
+
+    return False
+
+def __validate_input_filters(filters):
+    # Validate input.
+    if filters is None:
+        print "No filters set"
+        return False
+
+    if type(filters) != list:
+        print "Filters must be a list of key/value pairs"
+        return False
+
+    for filter in filters:
+        if type(filter['Values']) != list:
+            print "Filter Values must be a list of values"
+            return False
+
+    return True
 
 def filter_list(resource_list, filters, aggr_and=False):
     '''
@@ -32,18 +96,8 @@ def filter_list(resource_list, filters, aggr_and=False):
         filtered_list: A list of filtered resource upon success.
     '''
     # Validate input.
-    if filters is None:
-        print "No filters set"
+    if not __validate_input_filters(filters):
         return None
-
-    if type(filters) != list:
-        print "Filters must be a list of key/value pairs"
-        return None
-
-    for filter in filters:
-        if type(filter['Values']) != list:
-            print "Filter Values must be a list of values"
-            return None
 
     filtered_idxes = {}
     idx = 0
@@ -57,22 +111,28 @@ def filter_list(resource_list, filters, aggr_and=False):
             if resource_val is None:
                     continue
 
+            if __check_filter_match(resource_val, values):
+                if filtered_idxes.get(idx, None) is None:
+                    filtered_idxes[idx] = 1
+                else:
+                    filtered_idxes[idx] += 1
+
             # If the type is of 'str' or 'int'
-            if type(resource_val) == str or \
-                    type(resource_val) == int:
-                if resource_val in values:
-                    if filtered_idxes.get(idx, None) is None:
-                        filtered_idxes[idx] = 1
-                    else:
-                        filtered_idxes[idx] += 1
-            if type(resource_val) == list:
-                for resval in resource_val:
-                    if resval in values:
-                        if filtered_idxes.get(idx, None) is None:
-                            filtered_idxes[idx] = 1
-                        else:
-                            filtered_idxes[idx] += 1
-                        break
+            #if type(resource_val) == str or \
+            #        type(resource_val) == int:
+            #    if resource_val in values:
+            #        if filtered_idxes.get(idx, None) is None:
+            #            filtered_idxes[idx] = 1
+            #        else:
+            #            filtered_idxes[idx] += 1
+            #if type(resource_val) == list:
+            #    for resval in resource_val:
+            #        if resval in values:
+            #            if filtered_idxes.get(idx, None) is None:
+            #                filtered_idxes[idx] = 1
+            #            else:
+            #                filtered_idxes[idx] += 1
+            #            break
         idx += 1
 
     filtered_list = []
