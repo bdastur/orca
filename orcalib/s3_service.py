@@ -293,7 +293,9 @@ class AwsServiceS3(object):
                 bucket['TagSet'] = None
                 continue
 
-            bucket['TagSet'] = tagdata['TagSet']
+            bucket['TagSet'] = {}
+            for tagitem in tagdata['TagSet']:
+                bucket['TagSet'][tagitem['Key']] = tagitem['Value']
 
         if queue:
             queue.put(bucketlist)
@@ -323,8 +325,8 @@ class AwsServiceS3(object):
                     bucket['validations']['result'] = 'FAIL'
                     bucket['validations']['tagresult'] = "No Tags Found"
                 else:
-                    for obj in bucket['TagSet']:
-                        bucket_taglist.append(obj['Key'])
+                    for key in bucket['TagSet'].keys():
+                        bucket_taglist.append(key)
                     bucket_tagset = set(bucket_taglist)
                     difference = tagset.difference(bucket_tagset)
                     if len(difference) != 0:
