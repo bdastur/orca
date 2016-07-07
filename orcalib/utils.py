@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-def __check_filter_match(resource_val, values):
+def __check_filter_match(resource_val, filter):
     '''
     API to validate the resources against filters.
     It returns a list of indexes and the number of successful
@@ -14,6 +14,8 @@ def __check_filter_match(resource_val, values):
     :type values: list
     :param values: a list of values to match against.
     '''
+
+    values = filter['Values']
 
     # If the type is of 'str' or 'int'
     if type(resource_val) == str or \
@@ -104,35 +106,16 @@ def filter_list(resource_list, filters, aggr_and=False):
     for resource in resource_list:
         for filter in filters:
             name = filter['Name']
-            values = filter['Values']
-
             resource_val = resource.get(name, None)
 
             if resource_val is None:
                     continue
 
-            if __check_filter_match(resource_val, values):
+            if __check_filter_match(resource_val, filter):
                 if filtered_idxes.get(idx, None) is None:
                     filtered_idxes[idx] = 1
                 else:
                     filtered_idxes[idx] += 1
-
-            # If the type is of 'str' or 'int'
-            #if type(resource_val) == str or \
-            #        type(resource_val) == int:
-            #    if resource_val in values:
-            #        if filtered_idxes.get(idx, None) is None:
-            #            filtered_idxes[idx] = 1
-            #        else:
-            #            filtered_idxes[idx] += 1
-            #if type(resource_val) == list:
-            #    for resval in resource_val:
-            #        if resval in values:
-            #            if filtered_idxes.get(idx, None) is None:
-            #                filtered_idxes[idx] = 1
-            #            else:
-            #                filtered_idxes[idx] += 1
-            #            break
         idx += 1
 
     filtered_list = []
