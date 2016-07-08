@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
+import botocore
 from orcalib.aws_config import AwsConfig
 from orcalib.aws_config import OrcaConfig
 
@@ -71,11 +72,48 @@ class AwsServiceEC2(object):
                         region not in regions:
                     continue
 
-                vms = self.clients[profile][region].describe_instances()
+                try:
+                    vms = self.clients[profile][region].describe_instances()
+                except botocore.exceptions.ClientError as botoerr:
+                    print "List VMS Failed: Account: %s, Region: %s [%s]" % \
+                        (profile, region, botoerr)
+                    continue
+
                 for vm in vms['Reservations']:
                     vm['region'] = region
                     vm['profile_name'] = profile
                     vm_list.append(vm)
+
+                for vm in vm_list:
+                    for instance in vm['Instances']:
+                        # Flatten Tags.
+                        if instance.get('Tags', None) is not None:
+                            if type(instance['Tags']) == list:
+                                tags = instance['Tags']
+                                instance['Tags'] = {}
+                                for tag in tags:
+                                    instance['Tags'][tag['Key']] = tag['Value']
+
+                        # Flatten Security Groups
+                        if instance.get('SecurityGroups', None) is not None:
+                            if type(instance['SecurityGroups']) == list:
+                                secgroups = instance['SecurityGroups']
+                                instance['SecurityGroups'] = {}
+                                for secgroup in secgroups:
+                                    instance['SecurityGroups'][secgroup['GroupId']] = \
+                                        secgroup['GroupName']
+
+                        # Flatten NetworkInterfaces
+                        if instance.get('NetworkInterfaces', None) is not None:
+                            if type(instance['NetworkInterfaces']) == list:
+                                nw_intfs = instance['NetworkInterfaces']
+                                instance['NetworkInterfaces'] = {}
+                                instobj = instance['NetworkInterfaces']
+                                for nw_intf in nw_intfs:
+                                    instobj[nw_intf['NetworkInterfaceId']] = \
+                                                    nw_intf
+
+
 
         return vm_list
 
