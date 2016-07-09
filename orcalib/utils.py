@@ -1,6 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+
+
+def __get_resource_from_key(resource, filter):
+    '''
+    Return the resourceval from the filter key.
+    '''
+    key_type = 0
+    resource_val = None
+    name = filter['Name']
+    if re.match(r'.*\..*', name):
+        key_type = 1
+
+    splitname = name.split(".")
+
+    if key_type == 0:
+        resource_val = resource.get(name, None)
+    elif key_type == 1:
+        tempresource = resource
+        for key in splitname:
+            tempresource = tempresource.get(key, None)
+            if tempresource is None:
+                return None
+
+        resource_val = tempresource
+
+    return resource_val
+
 
 def __check_filter_match(resource_val, filter):
     '''
@@ -52,6 +80,7 @@ def __check_filter_match(resource_val, filter):
 
     return False
 
+
 def __validate_input_filters(filters):
     # Validate input.
     if filters is None:
@@ -68,6 +97,7 @@ def __validate_input_filters(filters):
             return False
 
     return True
+
 
 def filter_list(resource_list, filters, aggr_and=False):
     '''
@@ -105,8 +135,7 @@ def filter_list(resource_list, filters, aggr_and=False):
     idx = 0
     for resource in resource_list:
         for filter in filters:
-            name = filter['Name']
-            resource_val = resource.get(name, None)
+            resource_val = __get_resource_from_key(resource, filter)
 
             if resource_val is None:
                     continue
