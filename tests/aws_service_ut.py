@@ -323,9 +323,6 @@ class AwsServiceUt(unittest.TestCase):
              },
             {'Name': 'profile_name',
              'Values': ['cpeproduction']
-             },
-            {'Name': 'TagSet',
-             'Values': [{'Key': 'Project', 'Value': 'ICE'}]
              }
         ]
         filtered_bucketlist = orcautils.filter_list(bucketlist,
@@ -346,7 +343,31 @@ class AwsServiceUt(unittest.TestCase):
         for bucket in filtered_bucketlist:
             print "Bucket: ", bucket
 
+    def test_filter_list3(self):
+        print "Test api - check filters on buckets."
+        service_client = aws_service.AwsService('s3')
+        self.failUnless(service_client.service is not None)
 
+        bucketlist = service_client.service.list_buckets()
+        service_client.service.populate_bucket_location(bucketlist)
+        service_client.service.populate_bucket_tagging(bucketlist)
+
+        for bucket in bucketlist:
+            print "Bucket: ", bucket
+
+        print "------------test 1----------------"
+        print "Filter buckets with Tag Project == ICE" \
+            " cpeproduction"
+        filters = [
+            {'Name': 'TagSet.Project',
+             'Values': ['ICE']
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters,
+                                                    aggr_and=True)
+        for bucket in filtered_bucketlist:
+            print "Bucket: ", bucket
 
 
 
