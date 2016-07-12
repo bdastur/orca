@@ -23,7 +23,6 @@ expiration_duration=
 ia_transition_duration=
 glacer_transition_duration=
 
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
 

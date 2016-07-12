@@ -69,7 +69,7 @@ function create_bucket()
 }
 
 
-readonly COMMANDLINE="$*"
+#readonly COMMANDLINE="$*"
 
 CMD_OPTIONS="a:b:dg:u:ho:"
 

@@ -22,25 +22,7 @@
 # <TODO: More examples>
 ####################################################
 
-#account=
-#bucketname=
 operation=
-#debug=false
-#group=
-#user=
-#create_accesskey=false
-#create_logincredentials=false
-#delimiter=false
-#force_password=
-#outputformat=
-#resource_actions=
-#resource_type=
-#resource_names=
-#prefix=
-#expiration_duration=
-#ia_transition_duration=
-#glacer_transition_duration=
-
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
@@ -53,9 +35,10 @@ function show_help_generic()
 {
     echo "`basename $0`  : ORCA - Operations"
     echo "-------------------------------------------------"
-    echo "usage: orcacli <service type> <operation type> [ OPTIONS ]"
-    echo "Services: "
+    echo "usage: orcacli <service type> <operation> [ OPTIONS ]"
     echo ""
+    echo "Available Services: "
+    echo "---------------------"
     servicearr=($services)
     for service in "${servicearr[@]}"
     do
@@ -65,18 +48,43 @@ function show_help_generic()
     exit 1
 }
 
+function show_help_service()
+{
+    local service=$1
+    local options=$2
+
+    echo "AWS Service: $service"
+    echo ""
+
+    if [[ $service = "s3" ]]; then
+        operations=($s3_operations)
+    elif [[ $service = "iam" ]]; then
+        operations=($iam_operations)
+    elif [[ $service = "ec2" ]]; then
+        operations=($ec2_operations)
+    fi
+
+    echo "Available Operations for $service:"
+    echo "---------------------------------"
+    for operation in "${operations[@]}"
+    do
+        echo "${operation}"
+    done
+
+    echo "Example: "
+    echo "aws $service ${operations[0]}"
+
+    exit 1
+}
+
+
 
 # Source helper scripts.
 source $DIR/orca_cmdline.sh
 source $DIR/aws_common_utils.sh
 
 
-if [[ $# -eq 0 ]]; then
-    echo "Error: No options provided"
-    echo "For Usage, execute:  `basename $0` -h"
-    echo "..."
-    exit 1
-elif [[ $1 = '-h' ]]; then
+if [[ $# -eq 0 || $1 = '-h' ]]; then
     show_help_generic
 fi
 
@@ -94,9 +102,8 @@ service_type=$1
 validate_service_type $service_type
 shift
 
-if [[ $1 = '-h' ]]; then
-    echo "Help for service"
-    show_help_service $service_type $CMD_OPTIONS
+if [[ $# -eq 0 || $1 = '-h' ]]; then
+    show_help_service $service_type
 fi
 
 
