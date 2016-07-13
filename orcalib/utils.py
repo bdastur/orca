@@ -44,18 +44,47 @@ def __check_filter_match(resource_val, filter):
     '''
 
     values = filter['Values']
+    filter_check = filter.get('check', 'eq')
+    filter_regex = filter.get('regex', False)
 
     # If the type is of 'str' or 'int'
-    if type(resource_val) == str or \
-       type(resource_val) == int:
-        if resource_val in values:
-            return True
+    if type(resource_val) == str:
+        if filter_regex is True:
+            for val in values:
+                search_pattern = r"%s" % val
+                if re.match(search_pattern, resource_val) is not None:
+                    return True
+        else:
+            if resource_val in values:
+                return True
+    elif type(resource_val) == int:
+        if filter_check == "eq":
+            if resource_val in values:
+                return True
+        elif filter_check == "gt":
+            for val in values:
+                if resource_val > val:
+                    return True
+        elif filter_check == "lt":
+            for val in values:
+                if resource_val < val:
+                    return True
     if type(resource_val) == list:
         for resval in resource_val:
             if type(resval) == str or \
                     type(resval) == int:
-                if resval in values:
-                    return True
+                if filter_check == "eq":
+                    if resval in values:
+                        return True
+                elif filter_check == "gt":
+                    for val in values:
+                        if resval > val:
+                            return True
+                elif filter_check == "lt":
+                    for val in values:
+                        if resval < val:
+                            return True
+
             elif type(resval) == dict:
                 print "Resource val is a dict: ", resval
                 print "values are: ", values

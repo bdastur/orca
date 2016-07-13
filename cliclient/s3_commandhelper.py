@@ -169,23 +169,22 @@ class S3CommandHandler(object):
         print table
 
     def display_s3_bucketlist(self, outputformat='json',
-                              filter=None, output_fields=None):
+                              filter=None, output_fields=None,
+                              aggr_and=False):
         '''
         Display the List of S3 buckets
         '''
         service_client = aws_service.AwsService('s3')
         bucketlist = service_client.service.list_buckets_fast()
-        if filter is not None:
-            bucketlist = orcautils.filter_list(bucketlist,
-                                               filter,
-                                               aggr_and=False)
-        #service_client.service.populate_bucket_location(bucketlist)
-        #service_client.service.populate_bucket_objects(bucketlist)
         newbucketlist = service_client.service.populate_bucket_fast("location",
                                                                     bucketlist)
         newbucketlist = service_client.service.populate_bucket_fast(
             "objects",
             newbucketlist)
+        if filter is not None:
+            newbucketlist = orcautils.filter_list(newbucketlist,
+                                                  filter,
+                                                  aggr_and=aggr_and)
 
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
