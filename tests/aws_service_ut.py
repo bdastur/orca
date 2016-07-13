@@ -111,7 +111,6 @@ class AwsServiceUt(unittest.TestCase):
             generate_new_s3_lifecycle_policy_document(policyobj)
         print "Policy doc: ", policydoc
 
-
     # IAM testcases.
     def test_list_users(self):
         print "Test the iam api to list users"
@@ -219,7 +218,6 @@ class AwsServiceUt(unittest.TestCase):
         nwinterfaces = ec2_client.service.list_network_interfaces()
         for nwintf in nwinterfaces:
             print "NW Interface: ", nwintf
-
 
     # ELB testcases.
     def test_list_elbs(self):
@@ -368,6 +366,47 @@ class AwsServiceUt(unittest.TestCase):
                                                     aggr_and=True)
         for bucket in filtered_bucketlist:
             print "Bucket: ", bucket
+
+    def test_filter_buckets(self):
+        print "Test bucket filtering"
+        service_client = aws_service.AwsService("s3")
+        self.failUnless(service_client.service is not None)
+
+        bucketlist = service_client.service.list_buckets_fast()
+        bucketlist = service_client.service.populate_bucket_fast("location",
+                                                                 bucketlist)
+        bucketlist = service_client.service.populate_bucket_fast("objects",
+                                                                 bucketlist)
+
+        for bucket in bucketlist:
+            print "Bucket: ", bucket
+
+        print "Test 1: Filter buckets with object count > 3"
+        filters = [
+            {'Name': 'object_count',
+             'Values': [3],
+             'check': 'gt'
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters,
+                                                    aggr_and=False)
+        print "Number of buckets with obj count > 3: ", len(filtered_bucketlist)
+
+        print "Test 2: Filter buckets with name like .*-s3-cpe-.*"
+        filters = [
+            {'Name': 'Name',
+             'Values': ['.*-s3-cpe-.*'],
+             'regex': True
+             }
+        ]
+        filtered_bucketlist = orcautils.filter_list(bucketlist,
+                                                    filters,
+                                                    aggr_and=False)
+        print "Buckets with naming conventions: ", len(filtered_bucketlist)
+
+
+
 
 
 
