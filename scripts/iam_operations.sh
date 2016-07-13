@@ -22,6 +22,8 @@ prefix=
 expiration_duration=
 ia_transition_duration=
 glacer_transition_duration=
+filter=
+output_fields=
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
@@ -35,7 +37,25 @@ function show_help_iam_list-users()
 
 function show_help_iam_create-user()
 {
-    echo "HELP: create user"
+    echo "Usage: orcacli iam create-user -a <account> -u <user name> <-g group name>  -p <policies> -l -c "
+    echo "--------------------------------------"
+    echo "Create a S3 bucket. Create a new IAM Policy to allow access to bucket and attach it to the group or user"
+    echo ""
+    echo "-a account   : Specifiy the account name where the new user should be created."
+    echo ""
+    echo "-b bucket    : Specify the bucket name to create."
+    echo ""
+    echo "-u username  : Specify the IAM User to attach the policy to"
+    echo ""
+    echo "-g group     : Specify the IAM Group to attach the policy to"
+    echo ""
+    echo "-c access_key: [OPTIONAL] If specified create an access key for the user."
+    echo ""
+    echo "-p policies  : [OPTIONAL] List of \"space\"  seperated policies to be applied to the User if specified"
+    echo ""
+    echo "-l login     : [OPTIONAL] If specified create a login profile with a login password"
+    echo ""
+
     exit 1
 }
 
@@ -70,9 +90,6 @@ function  show_help_iam_revoke-access()
 }
 
 
-# Source helper scripts.
-#source $DIR/orca_cmdline.sh
-#source $DIR/aws_common_utils.sh
 
 # Create User.
 function create_user_account()
@@ -95,8 +112,8 @@ function grant_access_to_resource()
 
 }
 
-echo "$#"
-echo "COMMANDLINE: $COMMANDLINE"
+#echo "$#"
+#echo "COMMANDLINE: $COMMANDLINE"
 
 #######################################
 # Parse the positional arguments first.
@@ -105,13 +122,8 @@ echo "COMMANDLINE: $COMMANDLINE"
 # one position to the left.
 #######################################
 
-if [[ $operation = "list-users" ]]; then
-    CMD_OPTIONS="ho:"
-fi
 
-CMD_OPTIONS="a:cdf:g:lo:n:p:rt:s:u:h"
-echo "Operation in iam operations: $operation"
-echo "Service type: $service_type"
+CMD_OPTIONS="a:cdf:F:g:lo:O:n:p:rt:s:u:h"
 
 while getopts ${CMD_OPTIONS} option; do
     case $option in
@@ -131,6 +143,9 @@ while getopts ${CMD_OPTIONS} option; do
         f)
             force_password=$OPTARG
             ;;
+        F)
+            filter=$OPTARG
+            ;;
         g)
             group=$OPTARG
             ;;
@@ -142,6 +157,9 @@ while getopts ${CMD_OPTIONS} option; do
             ;;
         o)
             outputformat=$OPTARG
+            ;;
+        O)
+            output_fields=$OPTARG
             ;;
         p)
             policies=$OPTARG
@@ -158,8 +176,8 @@ while getopts ${CMD_OPTIONS} option; do
         u)
             user=$OPTARG
             ;;
-        :) echo "Error: option \"-$OPTARG\" needs argument"; echo "error :";;
-        *) echo "Error: Invalid option \"-$OPTARG\""; echo "invalid option error";;
+        :) echo "Error: option \"-$OPTARG\" needs argument";;
+        *) echo "Error: Invalid option \"-$OPTARG\"";;
     esac
 done
 
@@ -172,8 +190,6 @@ debug "[ Service: $service_type| Operation: $operation ]"
 debug "[ OPTIONS: Account: $account| Bucket Name: $bucketname ]"
 debug "..."
 debug=$curr_debug
-
-echo "Now run: $operation"
 
 if [[ $operation = "create-user" ]]; then
     create_user_account

@@ -788,13 +788,17 @@ function s3_list_buckets()
         outputformat="table"
     fi  
 
-    echo "List summary"
     python - << END
+import json
 from cliclient.s3_commandhelper import S3CommandHandler
 
+#print "In python: filter", '${filter}'
+filter = json.loads('${filter}')
+#print "Filter: ", filter
 
 s3cmdhandler = S3CommandHandler()
-s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}")
+s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}",
+                                   filter=filter)
 
 END
 

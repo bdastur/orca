@@ -14,7 +14,7 @@ create_accesskey=false
 create_logincredentials=false
 delimiter=false
 force_password=
-outputformat=
+outputformat="table"
 resource_actions=
 resource_type=
 resource_names=
@@ -22,35 +22,58 @@ prefix=
 expiration_duration=
 ia_transition_duration=
 glacer_transition_duration=
-
+filter=
+output_fields=
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
 
 # Help Functions
-function show_help_list-buckets()
+function show_help_s3_list-buckets()
 {
-    echo "S3: List Buckets help"
+    echo "Usage: orcacli s3 list-buckets [ -o <json|table>]"
+    echo "--------------------------------------"
+    echo "List All the buckets" 
+    echo "-o <outputformat> : Specify the output format. (json or tabular). Default: table"
+    echo ""
+
+    exit 1
 }
 
-function show_help_create-bucket()
+function show_help_s3_create-bucket()
 {
-    echo "S3: Create Bucket help"
+    echo "Usage: orcacli s3 create-bucket -a <account> -b <bucket name> <-g <group name> | -u <user name>]"
+    echo "--------------------------------------"
+    echo "Create a S3 bucket. Create a new IAM Policy to allow access to bucket and attach it to the group or user"
+    echo ""
+    echo "-a account   : Specifiy the account name where the new user should be created."
+    echo ""
+    echo "-b bucket    : Specify the bucket name to create."
+    echo ""
+    echo "-u username  : Specify the IAM User to attach the policy to"
+    echo ""
+    echo "-g group     : Specify the IAM Group to attach the policy to"
+    echo ""
+
+    exit 1
 }
 
-function show_help_create-lifecycle-policy()
+function show_help_s3_create-lifecycle-policy()
 {
     echo "S3: create lifecycle policy"
+    exit 1
 }
 
-function show_help_list-summary()
+function show_help_s3_list-summary()
 {
     echo "S3: show list summary help"
+    exit 1
 }
 
-function show_help_list-validations()
+function show_help_s3_list-validations()
 {
     echo "S3: show validations help"
+    exit 1
 }
 
 
@@ -71,7 +94,7 @@ function create_bucket()
 
 #readonly COMMANDLINE="$*"
 
-CMD_OPTIONS="a:b:dg:u:ho:"
+CMD_OPTIONS="a:b:dF:g:u:ho:O:"
 
 
 while getopts ${CMD_OPTIONS} option; do
@@ -89,17 +112,23 @@ while getopts ${CMD_OPTIONS} option; do
         d)
             debug=true
             ;;
+        F)
+            filter=$OPTARG
+            ;;
         g)
             group=$OPTARG
             ;;
         o)
             outputformat=$OPTARG
             ;;
+        O)
+            output_fields=$OPTARG
+            ;;
         u)
             user=$OPTARG
             ;;
-        :) echo "Error: option \"-$OPTARG\" needs argument"; echo "error :";;
-        *) echo "Error: Invalid option \"-$OPTARG\""; echo "invalid option error";;
+        :) echo "Error: option \"-$OPTARG\" needs argument";;
+        *) echo "Error: Invalid option \"-$OPTARG\"";;
     esac
 done
 
@@ -120,7 +149,7 @@ if [[ $operation = "create-bucket" ]]; then
 elif [[ $operation = "list-summary" ]]; then
     s3_list_summary $outputformat
 elif [[ $operation = "list-buckets" ]]; then
-    s3_list_buckets $outputformat
+    s3_list_buckets $outputformat 
 elif [[ $operation = "list-validations" ]]; then
     s3_list_validations $outputformat
 fi
