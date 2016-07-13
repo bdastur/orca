@@ -13,6 +13,7 @@ import pprint
 import prettytable
 import textwrap
 import orcalib.aws_service as aws_service
+import orcalib.utils as orcautils
 
 
 class S3CommandHandler(object):
@@ -54,7 +55,8 @@ class S3CommandHandler(object):
 
         print table
 
-    def display_s3_summary(self, outputformat='json'):
+    def display_s3_summary(self, outputformat='json',
+                           filter=None, output_fields=None):
         '''
         Display S3 summary information
 
@@ -64,6 +66,10 @@ class S3CommandHandler(object):
         '''
         service_client = aws_service.AwsService('s3')
         bucketlist = service_client.service.list_buckets()
+        if filter is not None:
+            bucketlist = orcautils.filter_list(bucketlist,
+                                               filter,
+                                               aggr_and=False)
         #service_client.service.populate_bucket_location(bucketlist)
         newbucketlist = service_client.service.populate_bucket_fast("location",
                                                                     bucketlist)
@@ -162,12 +168,17 @@ class S3CommandHandler(object):
 
         print table
 
-    def display_s3_bucketlist(self, outputformat='json'):
+    def display_s3_bucketlist(self, outputformat='json',
+                              filter=None, output_fields=None):
         '''
         Display the List of S3 buckets
         '''
         service_client = aws_service.AwsService('s3')
         bucketlist = service_client.service.list_buckets_fast()
+        if filter is not None:
+            bucketlist = orcautils.filter_list(bucketlist,
+                                               filter,
+                                               aggr_and=False)
         #service_client.service.populate_bucket_location(bucketlist)
         #service_client.service.populate_bucket_objects(bucketlist)
         newbucketlist = service_client.service.populate_bucket_fast("location",

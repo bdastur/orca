@@ -22,7 +22,8 @@ prefix=
 expiration_duration=
 ia_transition_duration=
 glacer_transition_duration=
-
+filter=
+output_fields=
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ORCA_LOGFILE="/tmp/orcalog"
@@ -69,7 +70,7 @@ echo "COMMANDLINE: $COMMANDLINE"
 # one position to the left.
 #######################################
 
-CMD_OPTIONS="a:o:h"
+CMD_OPTIONS="a:F:o:O:h"
 echo "Operation in iam operations: $operation"
 echo "Service type: $service_type"
 
@@ -82,8 +83,14 @@ while getopts ${CMD_OPTIONS} option; do
         a)
             account=$OPTARG
             ;;
+        F)
+            filter=$OPTARG
+            ;;
         o)
             outputformat=$OPTARG
+            ;;
+        O)
+            output_fields=$OPTARG
             ;;
         :) echo "Error: option \"-$OPTARG\" needs argument"; echo "error :";;
         *) echo "Error: Invalid option \"-$OPTARG\""; echo "invalid option error";;
