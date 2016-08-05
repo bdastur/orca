@@ -922,11 +922,15 @@ function ec2_list_tags()
 
     echo "List summary"
     python - << END
+import json
 from cliclient.ec2_commandhelper import EC2CommandHandler
-
+try:
+    filter = json.loads('${filter}')
+except ValueError:
+    filter = None
 
 ec2cmdhandler = EC2CommandHandler()
-ec2cmdhandler.display_ec2_tags(outputformat="${outputformat}")
+ec2cmdhandler.display_ec2_tags(filter=filter, outputformat="${outputformat}")
 
 END
 

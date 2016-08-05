@@ -49,7 +49,15 @@ function show_help_ec2_list-summary()
 
 function show_help_ec2_list-tags()
 {
-    echo "HELP: ec2 list tags"
+    echo "Usage: orcacli ec2 list-tags [-o <json|table>] [-F <filter>]"
+    echo "---------------------------------------"
+    echo "List all tags"
+    echo "-o <outputformat>: Specify output format. (json|table). Default: table"
+    echo "-F <filter>: {Json format}"
+    echo ""
+    echo "Examples:"
+    echo "==========="
+    echo "orcacli ec2 list-tags -F '[{\\\"Name\\\": \\\"ResourceType\\\", \\\"Values\\\": [\\\"vpc\\\"]}]'"
     exit 1
 }
 
@@ -60,8 +68,8 @@ function show_help_ec2_list-vms()
 }
 
 
-echo "$#"
-echo "COMMANDLINE: $COMMANDLINE"
+#echo "$#"
+#echo "COMMANDLINE: $COMMANDLINE"
 
 #######################################
 # Parse the positional arguments first.
@@ -71,8 +79,8 @@ echo "COMMANDLINE: $COMMANDLINE"
 #######################################
 
 CMD_OPTIONS="a:F:o:O:h"
-echo "Operation in iam operations: $operation"
-echo "Service type: $service_type"
+#echo "Operation in iam operations: $operation"
+#echo "Service type: $service_type"
 
 while getopts ${CMD_OPTIONS} option; do
     case $option in
@@ -107,7 +115,7 @@ debug "[ OPTIONS: Account: $account| Bucket Name: $bucketname ]"
 debug "..."
 debug=$curr_debug
 
-echo "Now run: $operation"
+#echo "Now run: $operation"
 
 if [[ $operation = "list-vms" ]]; then
     ec2_list_vms $outputformat

@@ -11,6 +11,7 @@ CLI Interface to Aws Services.
 import pprint
 import prettytable
 import orcalib.aws_service as aws_service
+import orcalib.utils as orcautils
 from collections import defaultdict
 
 
@@ -185,12 +186,19 @@ class EC2CommandHandler(object):
 
         print table
 
-    def display_ec2_tags(self, outputformat='json'):
+    def display_ec2_tags(self, outputformat='json',
+                         filter=None, aggr_and=False):
         '''
         Display Tags for all EC2 Resources
         '''
         ec2_client = aws_service.AwsService('ec2')
         tagsobj = ec2_client.service.list_tags()
+
+        if filter is not None:
+            tagsobj = orcautils.filter_dict(tagsobj,
+                                            filter,
+                                            aggr_and=aggr_and)
+
         if outputformat == "json":
             pprinter = pprint.PrettyPrinter()
             pprinter.pprint(tagsobj)
