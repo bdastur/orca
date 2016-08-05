@@ -792,8 +792,11 @@ function s3_list_buckets()
 import json
 from cliclient.s3_commandhelper import S3CommandHandler
 
-#print "In python: filter", '${filter}'
-filter = json.loads('${filter}')
+try:
+    filter = json.loads('${filter}')
+except ValueError:
+    filter = None
+
 #print "Filter: ", filter
 
 s3cmdhandler = S3CommandHandler()
