@@ -49,7 +49,7 @@ def __check_filter_match(resource_val, filter):
 
     # If the type is of 'str' or 'int'
     if type(resource_val) == str:
-        if filter_regex is True:
+        if filter_regex is True or filter_regex in ['True', 'true']:
             for val in values:
                 search_pattern = r"%s" % val
                 if re.match(search_pattern, resource_val) is not None:

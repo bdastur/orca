@@ -797,7 +797,6 @@ try:
 except ValueError:
     filter = None
 
-#print "Filter: ", filter
 
 s3cmdhandler = S3CommandHandler()
 s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}",
