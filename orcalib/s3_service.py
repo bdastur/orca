@@ -200,9 +200,15 @@ class AwsServiceS3(object):
         newlist = []
         for bucket in bucketlist:
             profile = bucket['profile_name'][0]
-            locationdata = self.clients[profile].get_bucket_location(
-                Bucket=bucket['Name'])
-            bucket['LocationConstraint'] = locationdata['LocationConstraint']
+            try:
+                locationdata = self.clients[profile].get_bucket_location(
+                    Bucket=bucket['Name'])
+                bucket['LocationConstraint'] = \
+                    locationdata['LocationConstraint']
+            except botocore.exceptions.ClientError as botoerr:
+                print "Failed: [get bucket location] [%s] [%s] " % \
+                    (bucket['Name'], botoerr)
+                bucket['LocationConstraint'] = None
 
         if queue:
             newlist = bucketlist
@@ -239,9 +245,18 @@ class AwsServiceS3(object):
         '''
         for bucket in bucketlist:
             profile = bucket['profile_name'][0]
-            objectdata = self.clients[profile].list_objects(
-                Bucket=bucket['Name'])
-            bucket['objects'] = []
+            try:
+                objectdata = self.clients[profile].list_objects(
+                    Bucket=bucket['Name'])
+                bucket['objects'] = []
+            except botocore.exceptions.ClientError as botoerr:
+                print "Failed: [get bucket objects ] [%s] [%s] " % \
+                    (bucket['Name'], botoerr)
+                bucket['objects'] = None
+                bucket['object_count'] = 0
+                bucket['object_size'] = 0
+                bucket['LastModified'] = 0
+                continue
 
             try:
                 contents = objectdata['Contents']
