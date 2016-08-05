@@ -34,8 +34,16 @@ function show_help_s3_list-buckets()
     echo "Usage: orcacli s3 list-buckets [ -o <json|table>]"
     echo "--------------------------------------"
     echo "List All the buckets" 
-    echo "-o <outputformat> : Specify the output format. (json or tabular). Default: table"
+    echo "-o <outputformat> : Specify the output format. (json|table). Default: table"
+    echo "-F <Filter>: {Json format}"
     echo ""
+    echo "Examples:"
+    echo "============"
+    echo "orcacli s3 list-buckets"
+    echo "orcacli s3 list-buckets -o json"
+    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"Name\\\", \\\"Values\\\": [\\\"global-s3-cpe-prod-ua\\\", \\\"global-s3-cpe-prod-enterprisesecurity\\\"]}]'"
+    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"profile_name\\\", \\\"Values\\\": [\\\"cpeproduction\", \\\"cpe-aws-customer-prod\\\"]}]'"
+    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"Name\\\", \\\"Values\\\": [\\\"global-s3-cpe-*\\\"], \\\"regex\\\": \\\"True\\\"}]'"
 
     exit 1
 }
