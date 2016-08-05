@@ -162,6 +162,7 @@ def filter_list(resource_list, filters, aggr_and=False):
 
     filtered_idxes = {}
     idx = 0
+
     for resource in resource_list:
         for filter in filters:
             resource_val = __get_resource_from_key(resource, filter)
@@ -186,6 +187,58 @@ def filter_list(resource_list, filters, aggr_and=False):
 
 
     return filtered_list
+
+
+def filter_dict(resource_dict, filters, aggr_and=False):
+    '''
+    Return a filtered dictionary of resources.
+    API to filter a dictionary of resources.
+
+    :type resource_dict: A dictionary of dicts
+    :param resource_dict: A dictionary of resource objects
+
+    :type filters: A list of filters.
+    :param filters: List of filters to apply to the resource
+
+    Defining filters:
+    =================
+    Examples: [{'Name': '<key>', 'Values': ['<val>, '<val>'..]}]
+
+    :type aggr_and: Boolean flag
+    :param aggr_and: A flag to indicate whether to apply an and or
+        and or operation to aggregate result. This is applicable when
+        you have more than one key/value pairs in the filters.
+        Default behavior will be OR. Meaning if either of the key/value
+        pair matches it is added to the filtered list.
+    '''
+
+    if not __validate_input_filters(filters):
+        return None
+
+    filtered_resource = {}
+
+    for resourceid in resource_dict.keys():
+        resource = resource_dict[resourceid]
+        for filter in filters:
+            resource_val = __get_resource_from_key(resource, filter)
+
+            if resource_val is None:
+                continue
+
+            if __check_filter_match(resource_val, filter):
+                if filtered_resource.get(resourceid, None) is None:
+                    filtered_resource[resourceid] = resource
+                    filtered_resource[resourceid]['filter_cnt'] = 1
+                else:
+                    filtered_resource[resourceid]['filter_cnt'] += 1
+
+    for resource_id in filtered_resource.keys():
+        if aggr_and:
+            if filtered_resource[resourceid]['filter_cnt'] != len(filters):
+                del filtered_resource[resourceid]
+
+
+    return filtered_resource
 
 
 
