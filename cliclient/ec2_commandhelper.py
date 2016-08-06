@@ -261,10 +261,6 @@ class EC2CommandHandler(object):
                                               filter,
                                               aggr_and=aggr_and)
 
-        print "Secgroups:"
-        pprinter = pprint.PrettyPrinter()
-        pprinter.pprint(secgroups)
-
         for vm in vmlist:
             for instance in vm['Instances']:
                 instance_id = instance['InstanceId']
