@@ -274,7 +274,7 @@ class AwsServiceEC2(object):
 
                         group['IpPermissions'][from_port] = permission
 
-                    # Fromat IpPermissionsEgress
+                    # Format IpPermissionsEgress
                     egress_ip_permissions = group['IpPermissionsEgress']
                     group['IpPermissionsEgress'] = {}
                     for permission in egress_ip_permissions:
@@ -288,6 +288,16 @@ class AwsServiceEC2(object):
                             cidr = range['CidrIp']
                             permission['IpRanges'][cidr] = 1
                         group['IpPermissionsEgress'][from_port] = permission
+
+                    # Format Tags.
+                    try:
+                        tags = group['Tags']
+                    except KeyError:
+                        tags = []
+                    group['Tags'] = {}
+                    for tag in tags:
+                        tag_key = tag['Key']
+                        group['Tags'][tag_key] = tag['Value']
 
                     if dict_type:
                         security_groups[group_id] = group

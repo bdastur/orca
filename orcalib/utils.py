@@ -232,7 +232,7 @@ def filter_dict(resource_dict, filters, aggr_and=False):
                 else:
                     filtered_resource[resourceid]['filter_cnt'] += 1
 
-    for resource_id in filtered_resource.keys():
+    for resourceid in filtered_resource.keys():
         if aggr_and:
             if filtered_resource[resourceid]['filter_cnt'] != len(filters):
                 del filtered_resource[resourceid]

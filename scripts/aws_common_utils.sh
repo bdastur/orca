@@ -800,7 +800,7 @@ except ValueError:
 
 s3cmdhandler = S3CommandHandler()
 s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}",
-                                   filter=filter)
+                                   filter=filter, arg_and=False)
 
 END
 
@@ -956,7 +956,7 @@ except ValueError:
 
 
 ec2cmdhandler = EC2CommandHandler()
-ec2cmdhandler.display_ec2_sec_groups(outputformat="${outputformat}", filter=filter, aggr_and=False)
+ec2cmdhandler.display_ec2_sec_groups(outputformat="${outputformat}", filter=filter, aggr_and=True)
 
 END
 
