@@ -244,7 +244,8 @@ class EC2CommandHandler(object):
 
         print table
 
-    def display_ec2_sec_groups(self, outputformat="json"):
+    def display_ec2_sec_groups(self, outputformat="json",
+                               filter=None, aggr_and=False):
         '''
         Display security groups
         '''
@@ -255,13 +256,24 @@ class EC2CommandHandler(object):
         nw_interfaces = ec2_client.service.list_network_interfaces()
         secgroups = ec2_client.service.list_security_groups(dict_type=True)
 
+        if filter is not None:
+            secgroups = orcautils.filter_dict(secgroups,
+                                              filter,
+                                              aggr_and=aggr_and)
+
+        print "Secgroups:"
+        pprinter = pprint.PrettyPrinter()
+        pprinter.pprint(secgroups)
 
         for vm in vmlist:
             for instance in vm['Instances']:
                 instance_id = instance['InstanceId']
                 vm_secgroups = instance['SecurityGroups']
-                for vm_secgroup in vm_secgroups:
-                    group_id = vm_secgroup['GroupId']
+                for vm_secgroup in vm_secgroups.keys():
+                    #group_id = vm_secgroup['GroupId']
+                    group_id = vm_secgroup
+                    if group_id not in secgroups.keys():
+                        continue
                     if secgroups[group_id].get('vm_list', None) is None:
                         secgroups[group_id]['vm_list'] = []
 
@@ -271,6 +283,8 @@ class EC2CommandHandler(object):
             elb_name = elb['LoadBalancerName']
             elb_secgroups = elb['SecurityGroups']
             for elb_secgroup in elb_secgroups:
+                if elb_secgroup not in secgroups.keys():
+                    continue
                 if secgroups[elb_secgroup].get('elb_list', None) is None:
                     secgroups[elb_secgroup]['elb_list'] = []
 
@@ -281,6 +295,9 @@ class EC2CommandHandler(object):
             nwintf_secgroups = nwintf['Groups']
             for nwintf_secgroup in nwintf_secgroups:
                 group_id = nwintf_secgroup['GroupId']
+                if group_id not in secgroups.keys():
+                    continue
+
                 if secgroups[group_id].get('nwintf_list', None) is None:
                     secgroups[group_id]['nwintf_list'] = []
 
