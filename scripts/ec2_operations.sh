@@ -48,6 +48,8 @@ function show_help_ec2_list-secgroups()
     echo "orcacli ec2 list-secgroups"
     echo "orcacli ec2 list-secgroups -o json"
     echo "orcacli ec2 list-secgroups -F '[{\\\"Name\\\": \\\"region\\\", \\\"Values\\\": [\\\"us-west-1\\\"]}]'"
+    echo "orcacli ec2 list-secgroups -F '[{\\\"Name\\\": \\\"region\\\", \\\"Values\\\": [\\\"us-west-1\\\","\
+         "\\\"us-west-2\\\", \\\"us-east-1\\\"]}, {\\\"Name\\\": \\\"Tags.Project\\\", \\\"Values\\\": [\\\"Openshift\\\"]}]'"
     exit 1
 
 }
