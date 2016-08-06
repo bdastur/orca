@@ -946,11 +946,17 @@ function ec2_list_sec_groups()
 
     echo "List Security groups"
     python - << END
+import json
 from cliclient.ec2_commandhelper import EC2CommandHandler
+
+try:
+    filter = json.loads('${filter}')
+except ValueError:
+    filter = None
 
 
 ec2cmdhandler = EC2CommandHandler()
-ec2cmdhandler.display_ec2_sec_groups(outputformat="${outputformat}")
+ec2cmdhandler.display_ec2_sec_groups(outputformat="${outputformat}", filter=filter, aggr_and=False)
 
 END
 

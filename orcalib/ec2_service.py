@@ -257,10 +257,42 @@ class AwsServiceEC2(object):
                 client = self.clients[profile][region]
                 groups = client.describe_security_groups()
                 for group in groups['SecurityGroups']:
+                    group_id = group['GroupId']
+                    # Format IpPermissions.
+                    group_ip_permissions = group['IpPermissions']
+                    group['IpPermissions'] = {}
+                    for permission in group_ip_permissions:
+                        try:
+                            from_port = permission['FromPort']
+                        except KeyError:
+                            from_port = "-1"
+                        ip_ranges = permission['IpRanges']
+                        permission['IpRanges'] = {}
+                        for range in ip_ranges:
+                            cidr = range['CidrIp']
+                            permission['IpRanges'][cidr] = 1
+
+                        group['IpPermissions'][from_port] = permission
+
+                    # Fromat IpPermissionsEgress
+                    egress_ip_permissions = group['IpPermissionsEgress']
+                    group['IpPermissionsEgress'] = {}
+                    for permission in egress_ip_permissions:
+                        try:
+                            from_port = permission['FromPort']
+                        except KeyError:
+                            from_port = "-1"
+                        ip_ranges = permission['IpRanges']
+                        permission['IpRanges'] = {}
+                        for range in ip_ranges:
+                            cidr = range['CidrIp']
+                            permission['IpRanges'][cidr] = 1
+                        group['IpPermissionsEgress'][from_port] = permission
+
                     if dict_type:
-                        security_groups[group['GroupId']] = group
-                        security_groups[group['GroupId']]['region'] = region
-                        security_groups[group['GroupId']]['profile_name'] = \
+                        security_groups[group_id] = group
+                        security_groups[group_id]['region'] = region
+                        security_groups[group_id]['profile_name'] = \
                             profile
                     else:
                         group['region'] = region
