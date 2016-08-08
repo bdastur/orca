@@ -10,6 +10,7 @@ CLI Interface to Aws Services.
 
 import pprint
 import prettytable
+import textwrap
 import orcalib.aws_service as aws_service
 import orcalib.utils as orcautils
 from collections import defaultdict
@@ -211,9 +212,10 @@ class EC2CommandHandler(object):
         '''
         print "Sec groups table"
         header = ["Group Id", "Group Name", "Zone", "Account",
-                  "Instances", "ELBs", "Network Interfaces", "Intf Names"]
+                  "Instances", "ELBs", "Network Interfaces", "Tags"]
         table = prettytable.PrettyTable(header)
         table.align["Instances"] = "l"
+        table.align["Tags"] = "l"
 
         for secgroup in secgroups.keys():
             group_id = secgroup
@@ -233,13 +235,17 @@ class EC2CommandHandler(object):
 
             try:
                 nwintfs = len(obj['nwintf_list'])
-                nwintf_names = obj['nwintf_list']
             except KeyError:
                 nwintfs = 0
-                nwintf_names = "NA"
+
+            tagstr = ""
+            for tag in obj['Tags'].keys():
+                tagstr = tagstr + "%s: %s, " % (tag, obj['Tags'][tag])
+            tagstr = textwrap.fill(tagstr, 45)
+
 
             row = [group_id, group_name, zone, account, instances,
-                   elbs, nwintfs, nwintf_names]
+                   elbs, nwintfs, tagstr]
             table.add_row(row)
 
         print table
