@@ -42,8 +42,9 @@ function show_help_s3_list-buckets()
     echo "orcacli s3 list-buckets"
     echo "orcacli s3 list-buckets -o json"
     echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"Name\\\", \\\"Values\\\": [\\\"global-s3-cpe-prod-ua\\\", \\\"global-s3-cpe-prod-enterprisesecurity\\\"]}]'"
-    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"profile_name\\\", \\\"Values\\\": [\\\"cpeproduction\", \\\"cpe-aws-customer-prod\\\"]}]'"
+    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"profile_name\\\", \\\"Values\\\": [\\\"cpeproduction\\\", \\\"cpe-aws-customer-prod\\\"]}]'"
     echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"Name\\\", \\\"Values\\\": [\\\"global-s3-cpe-*\\\"], \\\"regex\\\": \\\"True\\\"}]'"
+    echo "orcacli s3 list-buckets -F '[{\\\"Name\\\": \\\"object_size\\\", \\\"Values\\\": [200000], \\\"check\\\": "gt"}]'"
 
     exit 1
 }
