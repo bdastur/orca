@@ -212,10 +212,11 @@ class EC2CommandHandler(object):
         '''
         print "Sec groups table"
         header = ["Group Id", "Group Name", "Zone", "Account",
-                  "Instances", "ELBs", "Network Interfaces", "Tags"]
+                  "Instances", "ELBs", "Network Interfaces", "Tags", "Cidr"]
         table = prettytable.PrettyTable(header)
         table.align["Instances"] = "l"
         table.align["Tags"] = "l"
+        table.align['Cidr'] = "l"
 
         for secgroup in secgroups.keys():
             group_id = secgroup
@@ -243,9 +244,18 @@ class EC2CommandHandler(object):
                 tagstr = tagstr + "%s: %s, " % (tag, obj['Tags'][tag])
             tagstr = textwrap.fill(tagstr, 45)
 
+            cidr_str = ""
+            for port in obj['IpPermissions'].keys():
+                ipranges = obj['IpPermissions'][port]['IpRanges']
+                cidr_str = cidr_str + "[%s]" % port
+                for key in ipranges.keys():
+                    cidr_str = cidr_str + ": " + key
+
+            cidr_str = textwrap.fill(cidr_str, 50)
+
 
             row = [group_id, group_name, zone, account, instances,
-                   elbs, nwintfs, tagstr]
+                   elbs, nwintfs, tagstr, cidr_str]
             table.add_row(row)
 
         print table

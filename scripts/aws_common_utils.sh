@@ -795,12 +795,13 @@ from cliclient.s3_commandhelper import S3CommandHandler
 try:
     filter = json.loads('${filter}')
 except ValueError:
+    print "Filter not a valid Json"
     filter = None
 
 
 s3cmdhandler = S3CommandHandler()
 s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}",
-                                   filter=filter, arg_and=False)
+                                   filter=filter, aggr_and=False)
 
 END
 
@@ -952,6 +953,7 @@ from cliclient.ec2_commandhelper import EC2CommandHandler
 try:
     filter = json.loads('${filter}')
 except ValueError:
+    print "Filter not a valid json"
     filter = None
 
 
