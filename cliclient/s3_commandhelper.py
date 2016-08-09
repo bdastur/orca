@@ -56,7 +56,8 @@ class S3CommandHandler(object):
         print table
 
     def display_s3_summary(self, outputformat='json',
-                           filter=None, output_fields=None):
+                           filter=None, output_fields=None,
+                           arg_and=False):
         '''
         Display S3 summary information
 

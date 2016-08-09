@@ -21,6 +21,11 @@ def __get_resource_from_key(resource, filter):
     elif key_type == 1:
         tempresource = resource
         for key in splitname:
+            key = key.replace(":", ".")
+            try:
+                key = int(key)
+            except ValueError:
+                key = str(key)
             tempresource = tempresource.get(key, None)
             if tempresource is None:
                 return None
@@ -237,8 +242,6 @@ def filter_dict(resource_dict, filters, aggr_and=False):
             if filtered_resource[resourceid]['filter_cnt'] != len(filters):
                 del filtered_resource[resourceid]
 
-
     return filtered_resource
-
 
 
