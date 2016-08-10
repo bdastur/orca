@@ -801,7 +801,7 @@ except ValueError:
 
 s3cmdhandler = S3CommandHandler()
 s3cmdhandler.display_s3_bucketlist(outputformat="${outputformat}",
-                                   filter=filter, aggr_and=False)
+                                   filter=filter, aggr_and=True)
 
 END
 
