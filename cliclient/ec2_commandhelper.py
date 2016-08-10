@@ -212,12 +212,13 @@ class EC2CommandHandler(object):
         '''
         print "Sec groups table"
         header = ["Group Id", "Group Name", "Zone", "Account",
-                  "Instances", "ELBs", "Network Interfaces", "Tags", "Cidr"]
+                  "Instances", "ELBs", "N/w Intfs", "Tags", "Cidr"]
         table = prettytable.PrettyTable(header)
         table.align["Instances"] = "l"
         table.align["Tags"] = "l"
         table.align['Cidr'] = "l"
 
+        total_count = 0
         for secgroup in secgroups.keys():
             group_id = secgroup
 
@@ -253,10 +254,17 @@ class EC2CommandHandler(object):
 
             cidr_str = textwrap.fill(cidr_str, 50)
 
-
+            total_count += 1
             row = [group_id, group_name, zone, account, instances,
                    elbs, nwintfs, tagstr, cidr_str]
             table.add_row(row)
+
+        row = ["-"*10, "-"*10, "-"*10, "-"*10, "-"*10,
+               "-"*10, "-"*10, "-"*10, "-"*10]
+        table.add_row(row)
+
+        row = [total_count, "", "", "", "", "", "", "", ""]
+        table.add_row(row)
 
         print table
 
