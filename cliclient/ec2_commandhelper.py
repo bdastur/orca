@@ -52,7 +52,7 @@ class EC2CommandHandler(object):
         table = prettytable.PrettyTable(header)
 
         for vm in vmlist:
-            for i in range (len(vm['Instances'])):
+            for i in range(len(vm['Instances'])):
 
                 # if 'InstanceType' in vm['Instances'][i]:
                 instance_type = vm['Instances'][i]['InstanceType']
@@ -224,6 +224,7 @@ class EC2CommandHandler(object):
 
             obj = secgroups[secgroup]
             group_name = obj['GroupName']
+            group_name = textwrap.fill(group_name, 30)
             zone = obj['region']
             account = obj['profile_name']
             try:
