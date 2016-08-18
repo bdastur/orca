@@ -66,6 +66,10 @@ function show_help_ec2_list-secgroups()
     echo "orcacli ec2 list-secgroups -F '[{\\\"Name\\\": \\\"region\\\"," \
          " \\\"Values\\\": [\\\"us-west-1\\\", \\\"us-east-1\\\"]}, {\\\"Name\\\": \\\"IpPermissions.22.IpRanges.0:0:0:0/0\\\", \\\"Values\\\": [1]}]'"
     echo ""
+
+    echo "List sec groups whose GroupName starts with _CPE_"
+    echo "orcacli ec2 list-secgroups -F '[{\\\"Name\\\": \\\"GroupName\\\", \\\"Values\\\": [\\\"_CPE_*\\\"], \\\"regex\\\": \\\"True\\\"}]'"
+    echo ""
     exit 1
 
 }
