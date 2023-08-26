@@ -119,7 +119,7 @@ class AwsServiceS3(object):
             try:
                 buckets = self.clients[profile].list_buckets()
             except botocore.exceptions.ClientError as clienterr:
-                print "Client Error: [%s] [%s] " % (profile, clienterr)
+                print("Client Error: [%s] [%s] " % (profile, clienterr))
                 continue
 
 
@@ -166,7 +166,7 @@ class AwsServiceS3(object):
                 api = self.populate_bucket_validation
             else:
                 api = None
-                print "Invalid operation"
+                print("Invalid operation")
                 return
             queue = mp.Queue()
             kwargs = {'queue': queue}
@@ -206,8 +206,8 @@ class AwsServiceS3(object):
                 bucket['LocationConstraint'] = \
                     locationdata['LocationConstraint']
             except botocore.exceptions.ClientError as botoerr:
-                print "Failed: [get bucket location] [%s] [%s] " % \
-                    (bucket['Name'], botoerr)
+                print("Failed: [get bucket location] [%s] [%s] " % \
+                    (bucket['Name'], botoerr))
                 bucket['LocationConstraint'] = None
 
         if queue:
@@ -250,8 +250,8 @@ class AwsServiceS3(object):
                     Bucket=bucket['Name'])
                 bucket['objects'] = []
             except botocore.exceptions.ClientError as botoerr:
-                print "Failed: [get bucket objects ] [%s] [%s] " % \
-                    (bucket['Name'], botoerr)
+                print("Failed: [get bucket objects ] [%s] [%s] " % \
+                    (bucket['Name'], botoerr))
                 bucket['objects'] = None
                 bucket['object_count'] = 0
                 bucket['object_size'] = 0
@@ -383,14 +383,14 @@ class AwsServiceS3(object):
             if rule.get('id', None):
                 rule['id'] = "rule-%s" % str(timestamp)
 
-        print "policyobj: ", policyobj
+        print("policyobj: ", policyobj)
         template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
         env = jinja2.Environment(loader=template_loader,
                                  trim_blocks=False,
                                  lstrip_blocks=False)
         template = env.get_template(templatefile)
         data = template.render(policyobj)
-        print "data: ", data
+        print("data: ", data)
 
         jdata = json.loads(data)
         return jdata

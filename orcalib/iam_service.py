@@ -108,7 +108,7 @@ class AwsServiceIAM(object):
         the user belongs.
         '''
         if UserName is None or profile_name is None:
-            print "Error: Expected UserName and profile_name"
+            print("Error: Expected UserName and profile_name")
             return None
 
         client = self.clients[profile_name]
@@ -116,15 +116,15 @@ class AwsServiceIAM(object):
         try:
             client.get_user(UserName=UserName)
         except botocore.exceptions.ClientError as clienterr:
-            print "[%s: %s] User not found [%s]" % \
-                (profile_name, UserName, clienterr)
+            print("[%s: %s] User not found [%s]" % \
+                (profile_name, UserName, clienterr))
             return None
 
         try:
             user_groups = client.list_groups_for_user(UserName=UserName)
         except botocore.exceptions.ClientError as botoerror:
-            print "[%s: %s] Could not get groups for user [%s]" % \
-                (profile_name, UserName, botoerror)
+            print("[%s: %s] Could not get groups for user [%s]" % \
+                (profile_name, UserName, botoerror))
 
         policies = []
         # Get policies attached to groups
@@ -152,7 +152,7 @@ class AwsServiceIAM(object):
         Return all the permissions information for a given user
         '''
         if UserName is None or profile_name is None:
-            print "Error: Expected UserName and profile_name"
+            print("Error: Expected UserName and profile_name")
             return None
 
         client = self.clients[profile_name]
@@ -160,8 +160,8 @@ class AwsServiceIAM(object):
         try:
             client.get_user(UserName=UserName)
         except botocore.exceptions.ClientError as clienterr:
-            print "[%s : %s ] User not found [%s]" % \
-                (profile_name, UserName, clienterr)
+            print("[%s : %s ] User not found [%s]" % \
+                (profile_name, UserName, clienterr))
             return None
 
         policies = self.get_user_attached_policies(UserName=UserName,
@@ -244,7 +244,7 @@ class AwsServiceIAM(object):
         the user belongs.
         '''
         if UserName is None or profile_name is None:
-            print "Error: Expected UserName and profile_name"
+            print("Error: Expected UserName and profile_name")
             return None
 
         client = self.clients[profile_name]
@@ -252,8 +252,8 @@ class AwsServiceIAM(object):
         try:
             client.get_user(UserName=UserName)
         except botocore.exceptions.ClientError as clienterr:
-            print "[%s: %s] User not found [%s]" % \
-                (profile_name, UserName, clienterr)
+            print("[%s: %s] User not found [%s]" % \
+                (profile_name, UserName, clienterr))
 
         user_groups = client.list_groups_for_user(UserName=UserName)
 

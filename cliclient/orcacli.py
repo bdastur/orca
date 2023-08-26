@@ -20,7 +20,7 @@ from cliclient.iam_commandhelper import IAMCommandHandler
 class OrcaCli(object):
     def __init__(self):
         self.namespace = self.__parse_arguments()
-        print "Namespace: ", self.namespace
+        print("Namespace: ", self.namespace)
         if self.namespace.output is None:
             self.namespace.output = "table"
         if self.namespace.service == "ec2":
@@ -61,13 +61,13 @@ class OrcaCli(object):
                        profile_summary[profile]['secret_access_key']]
                 table.add_row(row)
 
-            print table
+            print(table)
 
     def perform_ec2_operations(self, namespace):
         '''
         Perform EC2 operations
         '''
-        print "ec2 operations"
+        print("ec2 operations")
         ec2cmdhandler = EC2CommandHandler()
 
         if namespace.summary is True:
@@ -79,7 +79,7 @@ class OrcaCli(object):
         '''
         Perform S3 operations
         '''
-        print "s3 operations"
+        print("s3 operations")
         s3cmdhandler = S3CommandHandler()
 
         if namespace.summary is True:
@@ -91,7 +91,7 @@ class OrcaCli(object):
         '''
         Perform iam operations
         '''
-        print "iam operations"
+        print("iam operations")
         iam_cmdhandler = IAMCommandHandler()
 
         if namespace.list_users:

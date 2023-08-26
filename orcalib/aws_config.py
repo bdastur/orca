@@ -3,7 +3,8 @@
 
 import os
 import yaml
-from ConfigParser import SafeConfigParser
+#from configparser.ConfigParser import SafeConfigParser
+import configparser
 
 
 class OrcaConfig(object):
@@ -18,20 +19,20 @@ class OrcaConfig(object):
         '''
         homedir = os.environ.get("HOME", None)
         if homedir is None:
-            print "ERROR: Home ENV is not set"
+            print( "ERROR: Home ENV is not set")
             return
         self.__orca_config = os.path.join(homedir, ".aws/orcaenv.yaml")
         try:
             fp = open(self.__orca_config)
         except IOError as ioerr:
-            print "ERROR: Failed to open [%s] [%s]" % \
-                (self.__orca_config, ioerr)
+            print("ERROR: Failed to open [%s] [%s]" % \
+                (self.__orca_config, ioerr))
 
         try:
             self.parsedyaml = yaml.safe_load(fp)
         except yaml.error.YAMLError as yamlerr:
-            print "ERROR: Yaml parsing failed [file: %s] [%s]" % \
-                (self.__orca_config, yamlerr)
+            print("ERROR: Yaml parsing failed [file: %s] [%s]" % \
+                (self.__orca_config, yamlerr))
             return
 
     def get_regions(self):
@@ -78,17 +79,18 @@ class AwsConfig(object):
         if credentials is None:
             homedir = os.environ.get('HOME', None)
             if homedir is None:
-                print "ERROR: HOME ENV is not set."
+                print("ERROR: HOME ENV is not set.")
                 return
             self.__config_file = os.path.join(homedir, ".aws/credentials")
         else:
             self.__config_file = credentials
 
         if not os.path.exists(self.__config_file):
-            print "ERROR: No aws credentials/config file present"
+            print("ERROR: No aws credentials/config file present")
             return
 
-        self.cfgparser = SafeConfigParser()
+        #self.cfgparser = SafeConfigParser()
+        self.cfgparser = configparser.ConfigParser()
         self.cfgparser.read(self.__config_file)
 
     def get_profiles(self):

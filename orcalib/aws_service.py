@@ -89,7 +89,7 @@ class AwsService(object):
                 iam_role_discover=iam_role_discover)
 
         else:
-            print "ERROR: Servicename [%s] not valid"
+            print("ERROR: Servicename [%s] not valid")
             return
 
 

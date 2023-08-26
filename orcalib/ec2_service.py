@@ -75,8 +75,8 @@ class AwsServiceEC2(object):
                 try:
                     vms = self.clients[profile][region].describe_instances()
                 except botocore.exceptions.ClientError as botoerr:
-                    print "List VMS Failed: Account: %s, Region: %s [%s]" % \
-                        (profile, region, botoerr)
+                    print("List VMS Failed: Account: %s, Region: %s [%s]" % \
+                        (profile, region, botoerr))
                     continue
 
                 for vm in vms['Reservations']:

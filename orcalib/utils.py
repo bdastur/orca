@@ -91,8 +91,8 @@ def __check_filter_match(resource_val, filter):
                             return True
 
             elif type(resval) == dict:
-                print "Resource val is a dict: ", resval
-                print "values are: ", values
+                print("Resource val is a dict: ", resval)
+                print("values are: ", values)
                 # For matching a list of dicts, the filter must have a
                 # list of dicts as well.
                 for value in values:
@@ -100,14 +100,14 @@ def __check_filter_match(resource_val, filter):
                         for valitem in value.items():
                             if resitem[0] == valitem[0] and \
                                     resitem[1] == valitem[1]:
-                                print "Matched: %s %s %s %s" % \
+                                print("Matched: %s %s %s %s" % \
                                     (valitem[0], resitem[0],
-                                     valitem[1], resitem[1])
+                                     valitem[1], resitem[1]))
                                 return True
                             else:
-                                print "Did not match %s %s %s %s" % \
+                                print("Did not match %s %s %s %s" % \
                                     (valitem[0], resitem[0],
-                                     valitem[1], resitem[1])
+                                     valitem[1], resitem[1]))
 
                     #for key in value.keys():
                     #    print "Key: ", key, value[key]
@@ -118,16 +118,16 @@ def __check_filter_match(resource_val, filter):
 def __validate_input_filters(filters):
     # Validate input.
     if filters is None:
-        print "No filters set"
+        print("No filters set")
         return False
 
     if type(filters) != list:
-        print "Filters must be a list of key/value pairs"
+        print("Filters must be a list of key/value pairs")
         return False
 
     for filter in filters:
         if type(filter['Values']) != list:
-            print "Filter Values must be a list of values"
+            print("Filter Values must be a list of values")
             return False
 
     return True

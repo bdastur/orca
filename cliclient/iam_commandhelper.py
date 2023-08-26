@@ -17,7 +17,7 @@ import orcalib.aws_config as aws_config
 
 class IAMCommandHandler(object):
     def __init__(self):
-        print "IAM command handler"
+        print("IAM command handler")
 
     def display_iam_userlist_table(self, userlist):
         '''
@@ -64,7 +64,7 @@ class IAMCommandHandler(object):
 
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_iam_userlist(self, outputformat='json'):
         '''
@@ -133,7 +133,7 @@ class IAMCommandHandler(object):
             statementstr = textwrap.fill(statementstr, 34)
             table.add_column(profile, [statementstr], align="l")
 
-        print table
+        print(table)
 
     def display_iam_user_permissions(self, user_name, outputformat='json'):
         '''
@@ -151,8 +151,8 @@ class IAMCommandHandler(object):
 
             profile_perms[profile] = permissions
             if outputformat == "json":
-                print "\n(%s: %s) " % (profile, user_name)
-                print "========================================="
+                print("\n(%s: %s) " % (profile, user_name))
+                print("=========================================")
                 pprinter = pprint.PrettyPrinter()
                 pprinter.pprint(permissions)
 
@@ -187,7 +187,7 @@ class IAMCommandHandler(object):
             policystr = textwrap.fill(policystr, 34)
             table.add_column(profile, [policystr], align="l")
 
-        print table
+        print(table)
 
     def display_iam_user_policies(self,
                                   user_name,

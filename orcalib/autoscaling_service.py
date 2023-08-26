@@ -124,7 +124,7 @@ class AwsServiceAutoScaling(object):
         if not self.auto_scaling_groups:
             self.list_autoscaling_groups()
         if not self.auto_scaling_groups:
-            print "Didnt find auto scaling groups names, cant list load bal."
+            print("Didnt find auto scaling groups names, cant list load bal.")
         for profile in self.clients.keys():
             if profile_names is not None and \
                     profile not in profile_names:

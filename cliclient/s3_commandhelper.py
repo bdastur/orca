@@ -18,7 +18,7 @@ import orcalib.utils as orcautils
 
 class S3CommandHandler(object):
     def __init__(self):
-        print "S3command handler"
+        print("S3command handler")
 
     def display_s3_summary_table(self, bucket_summary):
         '''
@@ -32,7 +32,7 @@ class S3CommandHandler(object):
             row = [profile, bucket_summary[profile]['total_count']]
             table.add_row(row)
 
-        print table
+        print(table)
 
         # Setup table header (loc constraint)
         header = ["Location", "Bucket Count"]
@@ -53,7 +53,7 @@ class S3CommandHandler(object):
             row = [" ", " "]
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_s3_summary(self, outputformat='json',
                            filter=None, output_fields=None,
@@ -167,7 +167,7 @@ class S3CommandHandler(object):
                total_objects, total_objectsize, " - "]
         table.add_row(row)
 
-        print table
+        print(table)
 
     def display_s3_bucketlist(self, outputformat='json',
                               filter=None, output_fields=None,
@@ -213,7 +213,7 @@ class S3CommandHandler(object):
             row = [name, profile, naming_policy, tag_policy, result]
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_s3_bucket_validations(self, outputformat='json'):
         '''

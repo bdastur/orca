@@ -18,7 +18,7 @@ from collections import defaultdict
 
 class EC2CommandHandler(object):
     def __init__(self):
-        print "EC2command handler"
+        print("EC2command handler")
 
     def display_ec2_summary_table(self, vm_summary):
         '''
@@ -76,7 +76,7 @@ class EC2CommandHandler(object):
             row = [zone, zone_count[zone]]
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_ec2_vmlist_table(self, vmlist):
         '''
@@ -141,7 +141,7 @@ class EC2CommandHandler(object):
                        private_ip, vpc_id, zone, profile]
                 table.add_row(row)
 
-        print table
+        print(table)
 
     def display_ec2_vmlist(self, outputformat='json'):
         '''
@@ -185,7 +185,7 @@ class EC2CommandHandler(object):
             row = ["-"*20, "-"*20, "-"*20, "-"*50]
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_ec2_tags(self, outputformat='json',
                          filter=None, aggr_and=False):
@@ -210,7 +210,7 @@ class EC2CommandHandler(object):
         '''
         Display security groups in tabular format
         '''
-        print "Sec groups table"
+        print("Sec groups table")
         header = ["Group Id", "Group Name", "Zone", "Account",
                   "Instances", "ELBs", "N/w Intfs", "Tags", "Cidr"]
         table = prettytable.PrettyTable(header)
@@ -267,7 +267,7 @@ class EC2CommandHandler(object):
         row = [total_count, "", "", "", "", "", "", "", ""]
         table.add_row(row)
 
-        print table
+        print(table)
 
     def display_ec2_sec_groups(self, outputformat="json",
                                filter=None, aggr_and=False):
@@ -359,7 +359,7 @@ class EC2CommandHandler(object):
                    intf_attach_id, intf_account, intf_zone]
             table.add_row(row)
 
-        print table
+        print(table)
 
     def display_ec2_nw_interfaces(self, outputformat="json"):
         '''

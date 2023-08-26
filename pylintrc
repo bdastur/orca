@@ -10,7 +10,7 @@ max-public-methods=80
 good-names=az,ip,_,rc
 max-statements=150
 max-returns=9
-disable=W0141
+#disable=W0141
 max-module-lines=2000
 
 
